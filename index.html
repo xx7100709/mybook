@@ -7,9 +7,9 @@
   <meta name="theme-color" content="#FFFFFF">
   <link rel="manifest" href="./manifest.json">
   
-  <!-- 網頁頁籤 Favicon & Apple Touch Icon (使用你設計的圖片) -->
-  <link rel="icon" type="image/png" href="https://i.meee.com.tw/FUtavaA.png">
-  <link rel="apple-touch-icon" href="https://i.meee.com.tw/FUtavaA.png">
+  <link rel="icon" type="image/png" href="./icon.png?v=2">
+  <link rel="shortcut icon" type="image/png" href="./icon.png?v=2">
+  <link rel="apple-touch-icon" href="./icon.png?v=2">
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -34,7 +34,7 @@
 
     <main class="flex-1 px-6 pt-5">
       
-      <!-- 頁面 1: 書庫列表 (純書名卡片) -->
+      <!-- 頁面 1: 書庫列表 -->
       <div id="view-books" class="space-y-4">
         <div id="books-list" class="space-y-4">
           <p class="text-center text-gray-400 py-12 font-bold text-base">載入中...</p>
@@ -65,34 +65,38 @@
 
           <div>
             <label class="block text-sm font-extrabold text-gray-400 uppercase tracking-wider mb-2">書名</label>
-            <input type="text" id="book_title" list="book-list" required class="w-full bg-[#F6F6F6] text-[#111111] p-4.5 rounded-2xl border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-lg font-black">
+            <input type="text" id="book_title" list="book-list" required class="w-full bg-[#F6F6F6] text-[#111111] px-5 py-4 rounded-2xl border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-lg font-black leading-snug">
             <datalist id="book-list"></datalist>
           </div>
 
           <div>
             <label class="block text-sm font-extrabold text-gray-400 uppercase tracking-wider mb-2">主題分類</label>
-            <input type="text" id="category" list="category-list" required class="w-full bg-[#F6F6F6] text-[#111111] p-4.5 rounded-2xl border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-lg font-black">
+            <input type="text" id="category" list="category-list" required class="w-full bg-[#F6F6F6] text-[#111111] px-5 py-4 rounded-2xl border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-lg font-black leading-snug">
             <datalist id="category-list"></datalist>
           </div>
 
           <div>
             <div class="flex justify-between items-center mb-2">
               <label class="block text-sm font-extrabold text-gray-400 uppercase tracking-wider">劃線重點</label>
-              <button type="button" onclick="startSpeech('quote')" class="text-xs font-bold text-[#7C3AED] bg-[#7C3AED]/10 px-3.5 py-1.5 rounded-full">
-                🎙️ 語音輸入
+              <button type="button" onclick="startSpeech('quote')" title="語音輸入" class="p-2 rounded-full text-[#7C3AED] bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 active:scale-95 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 003-3V6a3 3 0 00-6 0v6.75a3 3 0 003 3z"></path>
+                </svg>
               </button>
             </div>
-            <textarea id="quote" required rows="5" class="w-full bg-[#F6F6F6] text-[#111111] p-4.5 rounded-2xl border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-semibold leading-relaxed"></textarea>
+            <textarea id="quote" required rows="5" class="w-full bg-[#F6F6F6] text-[#111111] p-5 rounded-2xl border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-semibold leading-relaxed"></textarea>
           </div>
 
           <div>
             <div class="flex justify-between items-center mb-2">
               <label class="block text-sm font-extrabold text-gray-400 uppercase tracking-wider">個人心得</label>
-              <button type="button" onclick="startSpeech('thought')" class="text-xs font-bold text-[#7C3AED] bg-[#7C3AED]/10 px-3.5 py-1.5 rounded-full">
-                🎙️ 語音輸入
+              <button type="button" onclick="startSpeech('thought')" title="語音輸入" class="p-2 rounded-full text-[#7C3AED] bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 active:scale-95 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 003-3V6a3 3 0 00-6 0v6.75a3 3 0 003 3z"></path>
+                </svg>
               </button>
             </div>
-            <textarea id="thought" rows="3" class="w-full bg-[#F6F6F6] text-[#111111] p-4.5 rounded-2xl border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-semibold leading-relaxed"></textarea>
+            <textarea id="thought" rows="3" class="w-full bg-[#F6F6F6] text-[#111111] p-5 rounded-2xl border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-semibold leading-relaxed"></textarea>
           </div>
 
           <div class="space-y-3 pt-2">
@@ -104,7 +108,7 @@
 
     </main>
 
-    <!-- 底部固定 Bar (文字完美置中、+ 號加大) -->
+    <!-- 底部固定 Bar -->
     <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-md bg-[#111111] text-white rounded-full z-40 p-2 shadow-2xl">
       <div class="flex justify-between items-center px-6 h-14">
         <button onclick="switchTab('books')" id="nav-books" class="flex-1 flex items-center justify-center text-center font-extrabold text-base text-white transition-opacity">
