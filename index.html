@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>我的讀書重點 App</title>
+  <meta name="theme-color" content="#FAF6F0">
+  <link rel="manifest" href="./manifest.json">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #FAF6F0; }
+    .pb-safe { padding-bottom: calc(5rem + env(safe-area-inset-bottom)); }
+  </style>
+</head>
+<body class="text-[#363028] min-h-screen pb-safe select-none">
+
+  <!-- 頂部 Header -->
+  <header class="sticky top-0 bg-[#FAF6F0]/90 backdrop-blur-md z-10 px-5 pt-6 pb-3 border-b border-[#E8DFCFC0]">
+    <div class="max-w-md mx-auto flex justify-between items-center">
+      <h1 id="page-title" class="text-2xl font-black text-[#2C251E]">📚 我的書庫</h1>
+      <span class="text-xs font-bold bg-[#EFE8DC] text-[#63584B] px-3 py-1.5 rounded-full shadow-sm">雲端同步</span>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto px-5 pt-4">
+    <!-- View 1: 書庫分頁 -->
+    <div id="view-books" class="space-y-4">
+      <div id="books-list" class="space-y-4">
+        <p class="text-center text-[#8C8275] py-10">載入中...</p>
+      </div>
+    </div>
+
+    <!-- View 2: 主題分頁 -->
+    <div id="view-categories" class="space-y-4 hidden">
+      <div id="categories-list" class="space-y-4">
+        <p class="text-center text-[#8C8275] py-10">載入中...</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- 彈出的新增 / 編輯 Modal -->
+  <div id="modal-form" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center hidden">
+    <div class="bg-[#FFFDF9] w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 border border-[#F0E8DD] shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-4">
+        <h2 id="form-title" class="text-xl font-extrabold text-[#2C251E] flex items-center gap-2">
+          <span class="w-3.5 h-3.5 rounded-full bg-[#FF7D54]"></span> 新增劃線重點
+        </h2>
+        <button onclick="closeModal()" class="text-sm font-bold text-[#8C8275] bg-[#EFE8DC] w-8 h-8 rounded-full flex items-center justify-center">✕</button>
+      </div>
+
+      <form id="note-form" class="space-y-4">
+        <input type="hidden" id="note-id">
+
+        <div>
+          <label class="block text-sm font-extrabold text-[#63584B] mb-1">書名 *</label>
+          <input type="text" id="book_title" list="book-list" placeholder="輸入或選擇書名" required class="w-full bg-[#FAF6F0] text-[#2C251E] p-4 rounded-2xl border border-[#E8DFCFC0] focus:outline-none focus:border-[#FF7D54] text-base font-bold">
+          <datalist id="book-list"></datalist>
+        </div>
+
+        <div>
+          <label class="block text-sm font-extrabold text-[#63584B] mb-1">主題分類 (如: 行銷、心理) *</label>
+          <input type="text" id="category" list="category-list" placeholder="輸入或選擇主題" required class="w-full bg-[#FAF6F0] text-[#2C251E] p-4 rounded-2xl border border-[#E8DFCFC0] focus:outline-none focus:border-[#FF7D54] text-base font-bold">
+          <datalist id="category-list"></datalist>
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <label class="block text-sm font-extrabold text-[#63584B]">重點內容 *</label>
+            <button type="button" onclick="startSpeech('quote')" class="text-xs text-[#FF7D54] bg-[#FF7D54]/10 px-2.5 py-1 rounded-xl font-extrabold flex items-center gap-1">
+              🎙️ 語音輸入
+            </button>
+          </div>
+          <textarea id="quote" placeholder="長段落會完整保留；若按 Enter 換行則會呈現為項目符號..." required rows="4" class="w-full bg-[#FAF6F0] text-[#2C251E] p-4 rounded-2xl border border-[#E8DFCFC0] focus:outline-none focus:border-[#FF7D54] text-base leading-relaxed font-medium"></textarea>
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <label class="block text-sm font-extrabold text-[#63584B]">個人心得 / 想法</label>
+            <button type="button" onclick="startSpeech('thought')" class="text-xs text-[#FF7D54] bg-[#FF7D54]/10 px-2.5 py-1 rounded-xl font-extrabold flex items-center gap-1">
+              🎙️ 語音輸入
+            </button>
+          </div>
+          <textarea id="thought" placeholder="紀錄這段話帶給你的啟發..." rows="2" class="w-full bg-[#FAF6F0] text-[#2C251E] p-4 rounded-2xl border border-[#E8DFCFC0] focus:outline-none focus:border-[#FF7D54] text-base leading-relaxed font-medium"></textarea>
+        </div>
+
+        <button type="submit" id="submit-btn" class="w-full bg-[#FF7D54] text-white font-extrabold py-4 rounded-2xl shadow-lg shadow-[#FF7D54]/30 hover:bg-[#E86C45] transition duration-200 text-base">
+          儲存重點
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 底部固定 Bar (Bottom Navigation Bar) -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-[#FFFDF9]/95 backdrop-blur-md border-t border-[#E8DFCFC0] z-40 px-6 py-2">
+    <div class="max-w-md mx-auto flex justify-around items-center relative">
+      <!-- 頁籤 1: 書庫 -->
+      <button onclick="switchTab('books')" id="nav-books" class="flex flex-col items-center gap-1 text-[#FF7D54] font-bold">
+        <span class="text-2xl">📚</span>
+        <span class="text-xs">書庫</span>
+      </button>
+
+      <!-- 中間凸起的加號大圓紐 -->
+      <button onclick="openModal()" class="flex items-center justify-center w-14 h-14 bg-[#FF7D54] text-white rounded-full shadow-lg shadow-[#FF7D54]/40 -mt-6 border-4 border-[#FAF6F0] active:scale-95 transition-transform">
+        <span class="text-3xl font-light mb-1">+</span>
+      </button>
+
+      <!-- 頁籤 2: 主題 -->
+      <button onclick="switchTab('categories')" id="nav-categories" class="flex flex-col items-center gap-1 text-[#8C8275] font-bold">
+        <span class="text-2xl">🏷️</span>
+        <span class="text-xs">主題</span>
+      </button>
+    </div>
+  </nav>
+
+  <script>
+    const SUPABASE_URL = 'https://uumglpeoqmkplcnccfrq.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_63y7i9dorGmGi34pP6rCRQ_5xuUo1r_';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let allNotes = [];
+    let currentTab = 'books';
+
+    async function fetchNotes() {
+      const { data, error } = await supabaseClient.from('book_notes').select('*').order('created_at', { ascending: false });
+      if (error) return;
+      allNotes = data;
+      updateDatalists();
+      renderCurrentView();
+    }
+
+    function updateDatalists() {
+      const books = [...new Set(allNotes.map(n => n.book_title).filter(Boolean))];
+      const categories = [...new Set(allNotes.map(n => n.category).filter(Boolean))];
+
+      document.getElementById('book-list').innerHTML = books.map(b => `<option value="${b}">`).join('');
+      document.getElementById('category-list').innerHTML = categories.map(c => `<option value="${c}">`).join('');
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      const title = document.getElementById('page-title');
+      const navBooks = document.getElementById('nav-books');
+      const navCat = document.getElementById('nav-categories');
+
+      document.getElementById('view-books').classList.add('hidden');
+      document.getElementById('view-categories').classList.add('hidden');
+
+      if (tab === 'books') {
+        title.innerText = "📚 我的書庫";
+        navBooks.className = "flex flex-col items-center gap-1 text-[#FF7D54] font-bold";
+        navCat.className = "flex flex-col items-center gap-1 text-[#8C8275] font-bold";
+        document.getElementById('view-books').classList.remove('hidden');
+      } else {
+        title.innerText = "🏷️ 主題分類";
+        navCat.className = "flex flex-col items-center gap-1 text-[#FF7D54] font-bold";
+        navBooks.className = "flex flex-col items-center gap-1 text-[#8C8275] font-bold";
+        document.getElementById('view-categories').classList.remove('hidden');
+      }
+      renderCurrentView();
+    }
+
+    function renderCurrentView() {
+      if (currentTab === 'books') renderBooksView();
+      else renderCategoriesView();
+    }
+
+    // 按「書名」歸類條列
+    function renderBooksView() {
+      const container = document.getElementById('books-list');
+      const booksMap = {};
+
+      allNotes.forEach(n => {
+        const title = n.book_title || '未命名書籍';
+        if (!booksMap[title]) booksMap[title] = [];
+        booksMap[title].push(n);
+      });
+
+      const bookNames = Object.keys(booksMap);
+      if (bookNames.length === 0) {
+        container.innerHTML = `<p class="text-center text-[#8C8275] py-10 bg-[#FFFDF9] rounded-3xl border border-[#F0E8DD]">點擊下方「+」新增第一本筆記吧！</p>`;
+        return;
+      }
+
+      container.innerHTML = bookNames.map(book => `
+        <div class="bg-[#FFFDF9] p-5 rounded-3xl border border-[#F0E8DD] shadow-sm space-y-4">
+          <div class="flex justify-between items-center border-b border-[#F0E8DD] pb-3">
+            <h2 class="text-lg font-black text-[#2C251E]">${book}</h2>
+            <span class="text-xs font-bold bg-[#FAF6F0] text-[#8C8275] px-2.5 py-1 rounded-full border border-[#E8DFCFC0]">${booksMap[book].length} 條重點</span>
+          </div>
+          <div class="space-y-3">
+            ${booksMap[book].map(note => renderNoteCard(note, false)).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 按「主題」層級呈現
+    function renderCategoriesView() {
+      const container = document.getElementById('categories-list');
+      const catMap = {};
+
+      allNotes.forEach(n => {
+        const cat = n.category || '一般';
+        if (!catMap[cat]) catMap[cat] = [];
+        catMap[cat].push(n);
+      });
+
+      const categories = Object.keys(catMap);
+      if (categories.length === 0) {
+        container.innerHTML = `<p class="text-center text-[#8C8275] py-10 bg-[#FFFDF9] rounded-3xl border border-[#F0E8DD]">尚無主題分類</p>`;
+        return;
+      }
+
+      container.innerHTML = categories.map(cat => `
+        <div class="bg-[#FFFDF9] p-5 rounded-3xl border border-[#F0E8DD] shadow-sm space-y-3">
+          <div class="flex justify-between items-center">
+            <span class="text-sm font-extrabold bg-[#76A895]/20 text-[#2D5A4C] px-3 py-1 rounded-full uppercase tracking-wider">🏷️ ${cat}</span>
+            <span class="text-xs font-bold text-[#8C8275]">${catMap[cat].length} 筆劃線</span>
+          </div>
+          <div class="space-y-3 pt-2">
+            ${catMap[cat].map(note => renderNoteCard(note, true)).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 渲染單條重點卡片 (僅在按下 Enter 時切換為 Bullet point)
+    function renderNoteCard(note, showBookTitle = false) {
+      const paragraphs = note.quote.split('\n').filter(line => line.trim() !== '');
+      const quotesHtml = paragraphs.map(p => `
+        <li class="flex items-start gap-2 mb-2">
+          <span class="text-[#FF7D54] font-black text-lg leading-none">•</span>
+          <span class="text-base font-medium text-[#2C251E] leading-relaxed">${p}</span>
+        </li>
+      `).join('');
+
+      return `
+        <div class="bg-[#FAF6F0] p-4 rounded-2xl border border-[#E8DFCFC0] space-y-2 relative">
+          ${showBookTitle ? `<p class="text-sm font-extrabold text-[#2C251E] mb-1">📖 ${note.book_title}</p>` : ''}
+          
+          <ul class="pl-1">${quotesHtml}</ul>
+
+          ${note.thought ? `
+            <div class="bg-[#FFF8E7] p-3 rounded-xl border border-[#FFE8B5] text-sm text-[#6B5218] font-medium mt-2">
+              <b>💡 心得：</b> ${note.thought}
+            </div>
+          ` : ''}
+
+          <div class="flex justify-end gap-2 pt-1 border-t border-[#E8DFCFC0]/50">
+            <button onclick="editNote(${note.id})" class="text-xs text-[#63584B] font-bold px-2 py-1">編輯</button>
+            <button onclick="deleteNote(${note.id})" class="text-xs text-[#FF7D54] font-bold px-2 py-1">刪除</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // Modal 控制
+    function openModal() {
+      resetForm();
+      document.getElementById('modal-form').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('modal-form').classList.add('hidden');
+    }
+
+    function resetForm() {
+      document.getElementById('note-id').value = '';
+      document.getElementById('note-form').reset();
+      document.getElementById('form-title').innerText = "新增劃線重點";
+      document.getElementById('submit-btn').innerText = "儲存重點";
+    }
+
+    function editNote(id) {
+      const note = allNotes.find(n => n.id === id);
+      if (!note) return;
+      document.getElementById('note-id').value = note.id;
+      document.getElementById('book_title').value = note.book_title;
+      document.getElementById('category').value = note.category || '';
+      document.getElementById('quote').value = note.quote;
+      document.getElementById('thought').value = note.thought || '';
+
+      document.getElementById('form-title').innerText = "編輯劃線重點";
+      document.getElementById('submit-btn').innerText = "更新重點內容";
+      document.getElementById('modal-form').classList.remove('hidden');
+    }
+
+    // 語音轉文字
+    function startSpeech(targetId) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) return alert("您的設備不支援語音輸入");
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'zh-TW';
+      recognition.onstart = () => document.getElementById(targetId).placeholder = "正在聆聽中...";
+      recognition.onresult = (e) => {
+        const val = document.getElementById(targetId).value;
+        document.getElementById(targetId).value = val ? val + '\n' + e.results[0][0].transcript : e.results[0][0].transcript;
+      };
+      recognition.start();
+    }
+
+    // 表單提交
+    document.getElementById('note-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submit-btn');
+      btn.innerText = '儲存中...'; btn.disabled = true;
+
+      const noteId = document.getElementById('note-id').value;
+      const payload = {
+        book_title: document.getElementById('book_title').value,
+        category: document.getElementById('category').value || '一般',
+        quote: document.getElementById('quote').value,
+        thought: document.getElementById('thought').value
+      };
+
+      let error;
+      if (noteId) {
+        const res = await supabaseClient.from('book_notes').update(payload).eq('id', noteId);
+        error = res.error;
+      } else {
+        const res = await supabaseClient.from('book_notes').insert([payload]);
+        error = res.error;
+      }
+
+      if (error) alert('失敗：' + error.message);
+      else { closeModal(); fetchNotes(); }
+      btn.disabled = false;
+    });
+
+    async function deleteNote(id) {
+      if (confirm('確定刪除這條重點嗎？')) {
+        const { error } = await supabaseClient.from('book_notes').delete().eq('id', id);
+        if (!error) fetchNotes();
+      }
+    }
+
+    fetchNotes();
+  </script>
+</body>
+</html>
