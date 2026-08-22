@@ -1,0 +1,16 @@
+{
+  "name": "讀書重點筆記",
+  "short_name": "來筆記",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1e1e2e",
+  "theme_color": "#1e1e2e",
+  "icons": [
+    {
+      "src": "https://i.meee.com.tw/QfIpxbS.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
