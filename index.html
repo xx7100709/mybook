@@ -108,14 +108,14 @@
 
     </main>
 
-    <!-- 底部固定 Bar (降低高度、放大且讓紫色圓圈上下突出) -->
+    <!-- 底部固定 Bar -->
     <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-md bg-[#111111] text-white rounded-full z-40 px-6 py-1.5 shadow-2xl">
       <div class="flex justify-between items-center h-11">
         <button onclick="switchTab('books')" id="nav-books" class="flex-1 flex items-center justify-center text-center font-extrabold text-sm text-white transition-opacity">
           書庫
         </button>
 
-        <button onclick="switchTab('add')" id="nav-add" class="w-16 h-16 bg-[#7C3AED] text-white rounded-full flex items-center justify-center font-black text-3xl shrink-0 shadow-lg active:scale-90 transition-transform -my-3">
+        <button onclick="openAddNew()" id="nav-add" class="w-16 h-16 bg-[#7C3AED] text-white rounded-full flex items-center justify-center font-black text-3xl shrink-0 shadow-lg active:scale-90 transition-transform -my-3">
           +
         </button>
 
@@ -175,6 +175,11 @@
       activeCategory = null;
       pushAppState();
       renderCurrentView(false);
+    }
+
+    function openAddNew() {
+      resetForm();
+      switchTab('add');
     }
 
     function goBack() {
