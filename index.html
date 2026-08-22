@@ -13,16 +13,21 @@
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Tesseract.js 用於圖片 OCR 文字辨識 -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #FFFFFF; color: #111111; }
     .pb-safe { padding-bottom: calc(7rem + env(safe-area-inset-bottom)); }
-    /* 富文本編輯區樣式 */
     [contenteditable="true"]:empty:before {
       content: attr(data-placeholder);
       color: #9CA3AF;
       pointer-events: none;
       display: block;
+    }
+    /* 塗鴉 Canvas 樣式 */
+    .canvas-container {
+      touch-action: none;
     }
   </style>
 </head>
@@ -87,9 +92,18 @@
             <div class="flex justify-between items-center mb-2">
               <label class="block text-sm font-extrabold text-gray-400 uppercase tracking-wider">劃線重點</label>
               <div class="flex items-center gap-2">
-                <button type="button" onclick="applyHighlight('quote')" class="px-3 py-1 bg-yellow-200 text-yellow-900 rounded-lg text-xs font-black shadow-sm active:scale-95 transition">
-                  🖍 劃黃色重點
+                <!-- 拍照塗鴉按鈕 -->
+                <button type="button" onclick="triggerCamera()" title="拍照劃線辨識" class="p-2 rounded-full text-[#7C3AED] bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 active:scale-95 transition flex items-center gap-1">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574v9.176A2.25 2.25 0 004.5 21h15a2.25 2.25 0 002.25-2.25V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"></path>
+                  </svg>
                 </button>
+                <!-- 隱藏的 input 用於選取照片 -->
+                <input type="file" id="camera-input" accept="image/*" capture="environment" class="hidden" onchange="handleImageUpload(event)">
+
+                <!-- 黃色圓圈劃重點按鈕 -->
+                <button type="button" onclick="applyHighlight('quote')" title="劃黃色重點" class="w-7 h-7 bg-yellow-300 rounded-full shadow-sm active:scale-90 transition border border-yellow-400/30"></button>
                 <button type="button" onclick="startSpeech('quote')" title="語音輸入" class="p-2 rounded-full text-[#7C3AED] bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 active:scale-95 transition">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 003-3V6a3 3 0 00-6 0v6.75a3 3 0 003 3z"></path>
@@ -104,10 +118,8 @@
           <div>
             <div class="flex justify-between items-center mb-2">
               <label class="block text-sm font-extrabold text-gray-400 uppercase tracking-wider">個人心得</label>
-              <div class="flex items-center gap-2">
-                <button type="button" onclick="applyHighlight('thought')" class="px-3 py-1 bg-yellow-200 text-yellow-900 rounded-lg text-xs font-black shadow-sm active:scale-95 transition">
-                  🖍 劃黃色重點
-                </button>
+              <div class="flex items-center gap-3">
+                <button type="button" onclick="applyHighlight('thought')" title="劃黃色重點" class="w-7 h-7 bg-yellow-300 rounded-full shadow-sm active:scale-90 transition border border-yellow-400/30"></button>
                 <button type="button" onclick="startSpeech('thought')" title="語音輸入" class="p-2 rounded-full text-[#7C3AED] bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 active:scale-95 transition">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 003-3V6a3 3 0 00-6 0v6.75a3 3 0 003 3z"></path>
@@ -118,9 +130,10 @@
             <div id="thought" contenteditable="true" data-placeholder="輸入個人心得（選填）..." class="w-full min-h-[90px] bg-[#F6F6F6] text-[#111111] p-5 rounded-2xl focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-semibold leading-relaxed overflow-y-auto"></div>
           </div>
 
+          <!-- 按鈕區域 -->
           <div class="space-y-3 pt-2">
-            <button type="submit" id="submit-btn" class="w-full bg-[#111111] text-white font-extrabold py-3.5 rounded-xl text-base shadow-md active:scale-98 transition-transform">儲存重點</button>
-            <button type="button" id="delete-btn" onclick="handleFormDelete()" class="hidden w-full bg-[#F6F6F6] text-gray-700 font-extrabold py-3.5 rounded-xl text-base active:scale-98 transition-transform">刪除重點</button>
+            <button type="submit" id="submit-btn" class="w-full bg-[#111111] text-white font-extrabold py-4 rounded-full text-base shadow-md active:scale-98 transition-transform">儲存重點</button>
+            <button type="button" id="delete-btn" onclick="handleFormDelete()" class="hidden w-full bg-[#F6F6F6] text-gray-700 font-extrabold py-4 rounded-full text-base active:scale-98 transition-transform">刪除重點</button>
           </div>
         </form>
       </div>
@@ -129,12 +142,12 @@
 
     <!-- 底部固定 Bar -->
     <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-md bg-[#111111] text-white rounded-full z-40 px-6 py-1.5 shadow-2xl">
-      <div class="flex justify-between items-center h-11">
+      <div class="flex justify-between items-center h-10">
         <button onclick="switchTab('books')" id="nav-books" class="flex-1 flex items-center justify-center text-center font-extrabold text-sm text-white transition-opacity">
           書庫
         </button>
 
-        <button onclick="openAddNew()" id="nav-add" class="w-16 h-16 bg-[#7C3AED] text-white rounded-full flex items-center justify-center font-black text-3xl shrink-0 shadow-lg active:scale-90 transition-transform -my-3">
+        <button onclick="openAddNew()" id="nav-add" class="w-16 h-16 bg-[#7C3AED] text-white rounded-full flex items-center justify-center font-black text-4xl shrink-0 shadow-xl active:scale-90 transition-transform -my-4 z-50">
           +
         </button>
 
@@ -146,6 +159,31 @@
 
   </div>
 
+  <!-- 拍照黃色塗鴉Modal彈窗 -->
+  <div id="doodle-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex flex-col items-center justify-between p-4 backdrop-blur-sm">
+    <div class="w-full flex justify-between items-center text-white py-2">
+      <h3 class="text-lg font-bold">用手指劃出黃色重點</h3>
+      <button onclick="closeDoodleModal()" class="text-gray-300 font-bold px-2 py-1">關閉</button>
+    </div>
+
+    <!-- 畫布容器 -->
+    <div class="relative flex-1 w-full flex items-center justify-center overflow-hidden canvas-container">
+      <canvas id="doodle-canvas" class="max-w-full max-h-full rounded-xl shadow-lg border border-white/20"></canvas>
+    </div>
+
+    <!-- 工具列與按鈕 -->
+    <div class="w-full max-w-md bg-white p-4 rounded-3xl space-y-3 mt-3">
+      <div class="flex items-center justify-between px-2">
+        <span class="text-xs font-bold text-gray-500 uppercase">筆刷粗細</span>
+        <input type="range" id="brush-size" min="15" max="50" value="30" class="w-1/2 accent-[#7C3AED]">
+        <button onclick="clearCanvasDoodle()" class="text-xs font-bold text-red-500 bg-red-50 px-3 py-1.5 rounded-full">重畫</button>
+      </div>
+      <button id="ocr-btn" onclick="processDoodleOCR()" class="w-full bg-[#7C3AED] text-white font-extrabold py-3.5 rounded-full text-base shadow-md active:scale-95 transition">
+        辨識畫線文字
+      </button>
+    </div>
+  </div>
+
   <script>
     const SUPABASE_URL = 'https://uumglpeoqmkplcnccfrq.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_63y7i9dorGmGi34pP6rCRQ_5xuUo1r_';
@@ -155,6 +193,12 @@
     let currentTab = 'books';
     let activeBook = null;
     let activeCategory = null;
+
+    // 塗鴉相關變數
+    let loadedImage = null;
+    const canvas = document.getElementById('doodle-canvas');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
 
     window.addEventListener('popstate', (e) => {
       if (e.state) {
@@ -384,7 +428,6 @@
       switchTab('add');
     }
 
-    // 螢光筆劃線處理機制
     function applyHighlight(targetId) {
       const editor = document.getElementById(targetId);
       const sel = window.getSelection();
@@ -395,8 +438,6 @@
       }
 
       const range = sel.getRangeAt(0);
-      
-      // 確保選取的文字屬於該編輯區域
       if (!editor.contains(range.commonAncestorContainer)) {
         alert("請選取該編輯區域內的文字");
         return;
@@ -408,7 +449,6 @@
       try {
         range.surroundContents(span);
       } catch (e) {
-        // 處理跨標籤選取的例外情況
         document.execCommand('hiliteColor', false, '#FEF08A');
       }
 
@@ -427,6 +467,138 @@
       };
       recognition.start();
     }
+
+    // --- 拍照與塗鴉劃重點功能 ---
+
+    function triggerCamera() {
+      document.getElementById('camera-input').click();
+    }
+
+    function handleImageUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        loadedImage = new Image();
+        loadedImage.onload = () => {
+          openDoodleModal();
+        };
+        loadedImage.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function openDoodleModal() {
+      document.getElementById('doodle-modal').classList.remove('hidden');
+      setupCanvas();
+    }
+
+    function closeDoodleModal() {
+      document.getElementById('doodle-modal').classList.add('hidden');
+      document.getElementById('camera-input').value = '';
+    }
+
+    function setupCanvas() {
+      const maxW = window.innerWidth - 32;
+      const maxH = window.innerHeight - 200;
+
+      let w = loadedImage.width;
+      let h = loadedImage.height;
+
+      const ratio = Math.min(maxW / w, maxH / h);
+      canvas.width = w * ratio;
+      canvas.height = h * ratio;
+
+      ctx.drawImage(loadedImage, 0, 0, canvas.width, canvas.height);
+      initCanvasEvents();
+    }
+
+    function clearCanvasDoodle() {
+      ctx.drawImage(loadedImage, 0, 0, canvas.width, canvas.height);
+    }
+
+    function initCanvasEvents() {
+      canvas.onmousedown = startDrawing;
+      canvas.onmousemove = draw;
+      canvas.onmouseup = stopDrawing;
+
+      canvas.ontouchstart = (e) => startDrawing(e.touches[0]);
+      canvas.ontouchmove = (e) => {
+        e.preventDefault();
+        draw(e.touches[0]);
+      };
+      canvas.ontouchend = stopDrawing;
+    }
+
+    function getCanvasPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+    }
+
+    function startDrawing(e) {
+      isDrawing = true;
+      const pos = getCanvasPos(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      const pos = getCanvasPos(e);
+      const size = document.getElementById('brush-size').value;
+
+      ctx.lineTo(pos.x, pos.y);
+      ctx.strokeStyle = 'rgba(254, 240, 138, 0.65)'; // 半透明黃色 (Yellow-200)
+      ctx.lineWidth = size;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+    }
+
+    function stopDrawing() {
+      isDrawing = false;
+    }
+
+    // 塗鴉區域提取並進行 OCR 文字辨識
+    async function processDoodleOCR() {
+      const btn = document.getElementById('ocr-btn');
+      btn.innerText = '文字辨識中 (請稍候)...';
+      btn.disabled = true;
+
+      try {
+        // 使用 Tesseract.js 進行繁體中文辨識
+        const { data: { text } } = await Tesseract.recognize(
+          canvas.toDataURL(),
+          'chi_tra',
+          { logger: m => console.log(m) }
+        );
+
+        // 清理無用換行與空白字元
+        const cleanText = text.replace(/\s+/g, ' ').trim();
+
+        if (cleanText) {
+          const editor = document.getElementById('quote');
+          // 帶入並自動套用黃色重點標籤
+          const highlightedHtml = `<mark class="bg-yellow-200 px-1 rounded text-[#111111]">${cleanText}</mark>`;
+          editor.innerHTML = editor.innerHTML ? editor.innerHTML + '<br>' + highlightedHtml : highlightedHtml;
+          closeDoodleModal();
+        } else {
+          alert('未能辨識出清晰文字，請再試一次或劃大範圍。');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('辨識失敗，請檢查網路連線或重試');
+      } finally {
+        btn.innerText = '辨識畫線文字';
+        btn.disabled = false;
+      }
+    }
+
+    // --- 資料表單提交與處裡 ---
 
     document.getElementById('note-form').addEventListener('submit', async (e) => {
       e.preventDefault();
