@@ -1,10 +1,10 @@
 {
-  "name": "讀書重點筆記",
-  "short_name": "來筆記",
+  "name": "讀書重點",
+  "short_name": "讀書重點",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#1e1e2e",
-  "theme_color": "#1e1e2e",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FFFFFF",
   "icons": [
     {
       "src": "https://i.meee.com.tw/FUtavaA.png",
