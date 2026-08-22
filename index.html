@@ -72,7 +72,7 @@
         <div id="category-detail-list" class="space-y-4"></div>
       </div>
 
-      <!-- 頁面 3: 新增/編輯頁面（第一頁預設顯示） -->
+      <!-- 頁面 3: 新增/編輯頁面（預設首頁） -->
       <div id="view-add" class="space-y-6 pb-8">
         <form id="note-form" class="space-y-6">
           <input type="hidden" id="note-id">
@@ -171,7 +171,7 @@
     <div class="w-full max-w-md bg-white p-4 rounded-3xl space-y-3 mt-3">
       <div class="flex items-center justify-between px-2">
         <span class="text-xs font-bold text-gray-500 uppercase">筆刷粗細</span>
-        <input type="range" id="brush-size" min="15" max="50" value="30" class="w-1/2 accent-[#7C3AED]">
+        <input type="range" id="brush-size" min="20" max="100" value="50" class="w-1/2 accent-[#7C3AED]">
         <button onclick="clearCanvasDoodle()" class="text-xs font-bold text-red-500 bg-red-50 px-3 py-1.5 rounded-full">重畫</button>
       </div>
       <button id="ocr-btn" onclick="processDoodleOCR()" class="w-full bg-[#7C3AED] text-white font-extrabold py-3.5 rounded-full text-base shadow-md active:scale-95 transition">
@@ -186,7 +186,7 @@
     const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
     let allNotes = [];
-    let currentTab = 'add'; // 預設進入新增頁面
+    let currentTab = 'add';
     let activeBook = null;
     let activeCategory = null;
     let selectedCategoryFilter = 'ALL';
@@ -195,8 +195,8 @@
     const canvas = document.getElementById('doodle-canvas');
     const ctx = canvas.getContext('2d');
     let isDrawing = false;
+    let scaleRatio = 1;
 
-    // 從網頁網址哈希 (Hash) 初始化頁面狀態，解決刷新跳回首頁問題
     function initAppStateFromHash() {
       const hash = location.hash.replace('#', '');
       if (hash) {
@@ -347,7 +347,7 @@
     function renderBookDetailView() {
       const container = document.getElementById('book-detail-list');
       const notes = allNotes.filter(n => n.book_title === activeBook);
-      container.innerHTML = notes.map(note => renderFullCard(note, false)).join('');
+      container.innerHTML = notes.map(note => renderFullCard(note)).join('');
     }
 
     function filterCategory(cat) {
@@ -378,7 +378,7 @@
           <div class="space-y-3">
             <h2 class="text-2xl font-black tracking-tight text-[#111111] px-1">${cat}</h2>
             <div class="space-y-3">
-              ${notes.map(note => renderPreviewCard(note, false)).join('')}
+              ${notes.map(note => renderPreviewCard(note)).join('')}
             </div>
           </div>
         `;
@@ -394,28 +394,26 @@
     function renderCategoryDetailView() {
       const container = document.getElementById('category-detail-list');
       const notes = allNotes.filter(n => (n.category || '未分類') === activeCategory);
-      container.innerHTML = notes.map(note => renderFullCard(note, false)).join('');
+      container.innerHTML = notes.map(note => renderFullCard(note)).join('');
     }
 
-    // 主題列表隱藏編輯 icon
-    function renderPreviewCard(note, showEdit = false) {
+    // 點擊重點卡片即可進入編輯頁面
+    function renderPreviewCard(note) {
       return `
-        <div class="bg-[#F6F6F6] p-5 rounded-2xl relative">
+        <div onclick="editNote(${note.id})" class="bg-[#F6F6F6] p-5 rounded-2xl cursor-pointer active:scale-98 transition relative">
           <div class="flex justify-between items-center mb-3">
             <p class="text-xs font-black text-gray-400 uppercase tracking-wider">${note.book_title}</p>
-            ${showEdit ? `<button onclick="editNote(${note.id})" class="p-1.5 hover:bg-gray-200 rounded-lg transition">✏️</button>` : ''}
           </div>
           <div class="text-base font-semibold text-[#111111] leading-relaxed pl-1">${note.quote}</div>
         </div>
       `;
     }
 
-    function renderFullCard(note, showEdit = false) {
+    function renderFullCard(note) {
       return `
-        <div class="bg-[#F6F6F6] p-5 rounded-2xl space-y-3 relative">
+        <div onclick="editNote(${note.id})" class="bg-[#F6F6F6] p-5 rounded-2xl space-y-3 cursor-pointer active:scale-98 transition relative">
           <div class="flex justify-between items-center">
             <p class="text-xs font-black text-gray-400 uppercase tracking-wider">${note.category || '未分類'}</p>
-            ${showEdit ? `<button onclick="editNote(${note.id})" class="p-1.5 hover:bg-gray-200 rounded-lg transition">✏️</button>` : ''}
           </div>
           <div class="text-base font-semibold text-[#111111] leading-relaxed pl-1">${note.quote}</div>
           ${note.thought ? `<div class="text-sm text-gray-700 font-medium bg-white p-3.5 rounded-xl mt-2 leading-relaxed">${note.thought}</div>` : ''}
@@ -487,7 +485,7 @@
       recognition.start();
     }
 
-    // --- 拍照與塗鴉劃重點 ---
+    // --- 拍照與高解析度塗鴉 OCR 技術升級 ---
 
     function triggerCamera() {
       document.getElementById('camera-input').click();
@@ -518,18 +516,17 @@
       document.getElementById('camera-input').value = '';
     }
 
+    // Canvas 保持圖片原本的高解析度，避免模糊
     function setupCanvas() {
-      const maxW = window.innerWidth - 32;
-      const maxH = window.innerHeight - 200;
-
-      let w = loadedImage.width;
-      let h = loadedImage.height;
-
-      const ratio = Math.min(maxW / w, maxH / h);
-      canvas.width = w * ratio;
-      canvas.height = h * ratio;
+      canvas.width = loadedImage.width;
+      canvas.height = loadedImage.height;
 
       ctx.drawImage(loadedImage, 0, 0, canvas.width, canvas.height);
+
+      // 計算顯示畫面的縮放比例，用於換算手指觸控座標
+      const rect = canvas.getBoundingClientRect();
+      scaleRatio = canvas.width / rect.width;
+
       initCanvasEvents();
     }
 
@@ -552,9 +549,10 @@
 
     function getCanvasPos(e) {
       const rect = canvas.getBoundingClientRect();
+      scaleRatio = canvas.width / rect.width;
       return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
+        x: (e.clientX - rect.left) * scaleRatio,
+        y: (e.clientY - rect.top) * scaleRatio
       };
     }
 
@@ -568,10 +566,10 @@
     function draw(e) {
       if (!isDrawing) return;
       const pos = getCanvasPos(e);
-      const size = document.getElementById('brush-size').value;
+      const size = document.getElementById('brush-size').value * scaleRatio;
 
       ctx.lineTo(pos.x, pos.y);
-      ctx.strokeStyle = 'rgba(254, 240, 138, 0.65)';
+      ctx.strokeStyle = 'rgba(254, 240, 138, 0.7)'; // 半透明螢光黃
       ctx.lineWidth = size;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
@@ -582,14 +580,38 @@
       isDrawing = false;
     }
 
+    // 圖像灰階處理，增強繁體中文文字對比
+    function preprocessCanvas(canvasSource) {
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = canvasSource.width;
+      tempCanvas.height = canvasSource.height;
+      const tempCtx = tempCanvas.getContext('2d');
+      tempCtx.drawImage(canvasSource, 0, 0);
+
+      const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+      const d = imgData.data;
+
+      for (let i = 0; i < d.length; i += 4) {
+        // 對比強化灰階化
+        let gray = 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2];
+        gray = gray < 130 ? gray * 0.7 : Math.min(255, gray * 1.2); 
+        d[i] = d[i + 1] = d[i + 2] = gray;
+      }
+
+      tempCtx.putImageData(imgData, 0, 0);
+      return tempCanvas.toDataURL();
+    }
+
     async function processDoodleOCR() {
       const btn = document.getElementById('ocr-btn');
-      btn.innerText = '文字辨識中...';
+      btn.innerText = '高精度辨識中...';
       btn.disabled = true;
 
       try {
+        const processedImage = preprocessCanvas(canvas);
+
         const { data: { text } } = await Tesseract.recognize(
-          canvas.toDataURL(),
+          processedImage,
           'chi_tra'
         );
 
@@ -601,7 +623,7 @@
           editor.innerHTML = editor.innerHTML ? editor.innerHTML + '<br>' + highlightedHtml : highlightedHtml;
           closeDoodleModal();
         } else {
-          alert('未能辨識出文字，請再試一次');
+          alert('未能清晰辨識，請重新劃線或調整鏡頭對焦！');
         }
       } catch (err) {
         console.error(err);
@@ -612,7 +634,8 @@
       }
     }
 
-    // 表單提交：儲存成功後切換至「主題」列表
+    // --- 資料表單提交 ---
+
     document.getElementById('note-form').addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -647,7 +670,7 @@
         alert('儲存失敗：' + error.message);
       } else { 
         await fetchNotes();
-        switchTab('categories'); // 跳轉回主題列表
+        switchTab('categories');
       }
     });
 
