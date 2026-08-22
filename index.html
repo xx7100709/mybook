@@ -100,26 +100,26 @@
           </div>
 
           <div class="space-y-3 pt-2">
-            <button type="submit" id="submit-btn" class="w-full bg-[#111111] text-white font-extrabold py-4.5 rounded-2xl text-lg shadow-md active:scale-98 transition-transform">儲存重點</button>
-            <button type="button" id="delete-btn" onclick="handleFormDelete()" class="hidden w-full bg-[#F6F6F6] text-gray-700 font-extrabold py-4.5 rounded-2xl text-lg active:scale-98 transition-transform">刪除重點</button>
+            <button type="submit" id="submit-btn" class="w-full bg-[#111111] text-white font-extrabold py-3.5 rounded-xl text-base shadow-md active:scale-98 transition-transform">儲存重點</button>
+            <button type="button" id="delete-btn" onclick="handleFormDelete()" class="hidden w-full bg-[#F6F6F6] text-gray-700 font-extrabold py-3.5 rounded-xl text-base active:scale-98 transition-transform">刪除重點</button>
           </div>
         </form>
       </div>
 
     </main>
 
-    <!-- 底部固定 Bar -->
-    <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-md bg-[#111111] text-white rounded-full z-40 p-2 shadow-2xl">
-      <div class="flex justify-between items-center px-6 h-14">
-        <button onclick="switchTab('books')" id="nav-books" class="flex-1 flex items-center justify-center text-center font-extrabold text-base text-white transition-opacity">
+    <!-- 底部固定 Bar (降低高度、放大且讓紫色圓圈上下突出) -->
+    <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-md bg-[#111111] text-white rounded-full z-40 px-6 py-1.5 shadow-2xl">
+      <div class="flex justify-between items-center h-11">
+        <button onclick="switchTab('books')" id="nav-books" class="flex-1 flex items-center justify-center text-center font-extrabold text-sm text-white transition-opacity">
           書庫
         </button>
 
-        <button onclick="switchTab('add')" id="nav-add" class="w-14 h-14 bg-[#7C3AED] text-white rounded-full flex items-center justify-center font-black text-3xl shrink-0 shadow-lg active:scale-90 transition-transform -mt-1">
+        <button onclick="switchTab('add')" id="nav-add" class="w-16 h-16 bg-[#7C3AED] text-white rounded-full flex items-center justify-center font-black text-3xl shrink-0 shadow-lg active:scale-90 transition-transform -my-3">
           +
         </button>
 
-        <button onclick="switchTab('categories')" id="nav-categories" class="flex-1 flex items-center justify-center text-center font-extrabold text-base text-gray-400 transition-opacity">
+        <button onclick="switchTab('categories')" id="nav-categories" class="flex-1 flex items-center justify-center text-center font-extrabold text-sm text-gray-400 transition-opacity">
           主題
         </button>
       </div>
@@ -199,8 +199,8 @@
       const views = ['view-books', 'view-book-detail', 'view-categories', 'view-category-detail', 'view-add'];
       views.forEach(v => document.getElementById(v).classList.add('hidden'));
 
-      navBooks.className = "flex-1 flex items-center justify-center text-center font-extrabold text-base text-gray-400";
-      navCat.className = "flex-1 flex items-center justify-center text-center font-extrabold text-base text-gray-400";
+      navBooks.className = "flex-1 flex items-center justify-center text-center font-extrabold text-sm text-gray-400";
+      navCat.className = "flex-1 flex items-center justify-center text-center font-extrabold text-sm text-gray-400";
       backBtn.classList.add('hidden');
 
       if (activeBook) {
@@ -215,12 +215,12 @@
         renderCategoryDetailView();
       } else if (currentTab === 'books') {
         title.innerText = "Library";
-        navBooks.className = "flex-1 flex items-center justify-center text-center font-extrabold text-base text-white";
+        navBooks.className = "flex-1 flex items-center justify-center text-center font-extrabold text-sm text-white";
         document.getElementById('view-books').classList.remove('hidden');
         renderBooksView();
       } else if (currentTab === 'categories') {
         title.innerText = "Topics";
-        navCat.className = "flex-1 flex items-center justify-center text-center font-extrabold text-base text-white";
+        navCat.className = "flex-1 flex items-center justify-center text-center font-extrabold text-sm text-white";
         document.getElementById('view-categories').classList.remove('hidden');
         renderCategoriesView();
       } else if (currentTab === 'add') {
