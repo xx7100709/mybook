@@ -6,112 +6,116 @@
   <title>讀書重點</title>
   <meta name="theme-color" content="#FFFFFF">
   <link rel="manifest" href="./manifest.json">
+  
+  <!-- 網頁頁籤 Favicon & Apple Touch Icon (使用你設計的圖片) -->
+  <link rel="icon" type="image/png" href="https://i.meee.com.tw/FUtavaA.png">
+  <link rel="apple-touch-icon" href="https://i.meee.com.tw/FUtavaA.png">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #FFFFFF; color: #111111; }
-    .pb-safe { padding-bottom: calc(6.5rem + env(safe-area-inset-bottom)); }
+    .pb-safe { padding-bottom: calc(7rem + env(safe-area-inset-bottom)); }
   </style>
 </head>
 <body class="min-h-screen pb-safe select-none bg-[#FFFFFF] flex flex-col items-center">
 
-  <!-- 限制最大寬度的容器，確保電腦版與手機版均保持精緻 -->
   <div class="w-full max-w-md min-h-screen relative flex flex-col bg-white">
 
     <!-- Header -->
-    <header class="sticky top-0 bg-white/90 backdrop-blur-md z-10 px-6 pt-8 pb-4 flex justify-between items-center border-b border-gray-50">
-      <div class="flex items-center gap-2">
-        <button id="back-btn" onclick="goBack()" class="hidden text-xl font-bold mr-1 text-[#111111]">←</button>
+    <header class="sticky top-0 bg-white/95 backdrop-blur-md z-10 px-6 pt-8 pb-4 flex justify-between items-center border-b border-gray-100">
+      <div class="flex items-center gap-3">
+        <button id="back-btn" onclick="goBack()" class="hidden text-2xl font-black text-[#111111] active:opacity-60">←</button>
         <h1 id="page-title" class="text-2xl font-black tracking-tight text-[#111111]">Library</h1>
       </div>
-      <div class="w-2.5 h-2.5 rounded-full bg-[#7C3AED]"></div>
+      <div class="w-3 h-3 rounded-full bg-[#7C3AED]"></div>
     </header>
 
-    <main class="flex-1 px-6 pt-4">
+    <main class="flex-1 px-6 pt-5">
       
-      <!-- 頁面 1: 書庫列表 (僅顯示書名) -->
-      <div id="view-books" class="space-y-3">
-        <div id="books-list" class="space-y-3">
-          <p class="text-center text-gray-400 py-10 font-semibold text-sm">載入中...</p>
+      <!-- 頁面 1: 書庫列表 (純書名卡片) -->
+      <div id="view-books" class="space-y-4">
+        <div id="books-list" class="space-y-4">
+          <p class="text-center text-gray-400 py-12 font-bold text-base">載入中...</p>
         </div>
       </div>
 
       <!-- 頁面 1-1: 獨立書籍重點頁面 -->
       <div id="view-book-detail" class="hidden space-y-4">
-        <div id="book-detail-list" class="space-y-3"></div>
+        <div id="book-detail-list" class="space-y-4"></div>
       </div>
 
-      <!-- 頁面 2: 主題列表 (預覽前三則重點) -->
+      <!-- 頁面 2: 主題列表 -->
       <div id="view-categories" class="space-y-6 hidden">
         <div id="categories-list" class="space-y-6">
-          <p class="text-center text-gray-400 py-10 font-semibold text-sm">載入中...</p>
+          <p class="text-center text-gray-400 py-12 font-bold text-base">載入中...</p>
         </div>
       </div>
 
-      <!-- 頁面 2-1: 獨立主題重點頁面 (包含心得與完整條目) -->
+      <!-- 頁面 2-1: 獨立主題重點頁面 -->
       <div id="view-category-detail" class="hidden space-y-4">
-        <div id="category-detail-list" class="space-y-3"></div>
+        <div id="category-detail-list" class="space-y-4"></div>
       </div>
 
       <!-- 頁面 3: 新增/編輯完整頁面 -->
       <div id="view-add" class="hidden space-y-6 pb-8">
-        <form id="note-form" class="space-y-5">
+        <form id="note-form" class="space-y-6">
           <input type="hidden" id="note-id">
 
           <div>
-            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">書名</label>
-            <input type="text" id="book_title" list="book-list" required class="w-full bg-[#F6F6F6] text-[#111111] p-4 rounded-2xl border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-bold">
+            <label class="block text-sm font-extrabold text-gray-400 uppercase tracking-wider mb-2">書名</label>
+            <input type="text" id="book_title" list="book-list" required class="w-full bg-[#F6F6F6] text-[#111111] p-4.5 rounded-2xl border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-lg font-black">
             <datalist id="book-list"></datalist>
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">主題分類</label>
-            <input type="text" id="category" list="category-list" required class="w-full bg-[#F6F6F6] text-[#111111] p-4 rounded-2xl border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-bold">
+            <label class="block text-sm font-extrabold text-gray-400 uppercase tracking-wider mb-2">主題分類</label>
+            <input type="text" id="category" list="category-list" required class="w-full bg-[#F6F6F6] text-[#111111] p-4.5 rounded-2xl border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-lg font-black">
             <datalist id="category-list"></datalist>
           </div>
 
           <div>
             <div class="flex justify-between items-center mb-2">
-              <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider">劃線重點</label>
-              <button type="button" onclick="startSpeech('quote')" class="text-xs font-bold text-[#7C3AED] bg-[#7C3AED]/10 px-3 py-1 rounded-full">
+              <label class="block text-sm font-extrabold text-gray-400 uppercase tracking-wider">劃線重點</label>
+              <button type="button" onclick="startSpeech('quote')" class="text-xs font-bold text-[#7C3AED] bg-[#7C3AED]/10 px-3.5 py-1.5 rounded-full">
                 🎙️ 語音輸入
               </button>
             </div>
-            <textarea id="quote" required rows="5" class="w-full bg-[#F6F6F6] text-[#111111] p-4 rounded-2xl border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-medium leading-relaxed"></textarea>
+            <textarea id="quote" required rows="5" class="w-full bg-[#F6F6F6] text-[#111111] p-4.5 rounded-2xl border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-semibold leading-relaxed"></textarea>
           </div>
 
           <div>
             <div class="flex justify-between items-center mb-2">
-              <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider">個人心得</label>
-              <button type="button" onclick="startSpeech('thought')" class="text-xs font-bold text-[#7C3AED] bg-[#7C3AED]/10 px-3 py-1 rounded-full">
+              <label class="block text-sm font-extrabold text-gray-400 uppercase tracking-wider">個人心得</label>
+              <button type="button" onclick="startSpeech('thought')" class="text-xs font-bold text-[#7C3AED] bg-[#7C3AED]/10 px-3.5 py-1.5 rounded-full">
                 🎙️ 語音輸入
               </button>
             </div>
-            <textarea id="thought" rows="3" class="w-full bg-[#F6F6F6] text-[#111111] p-4 rounded-2xl border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-medium leading-relaxed"></textarea>
+            <textarea id="thought" rows="3" class="w-full bg-[#F6F6F6] text-[#111111] p-4.5 rounded-2xl border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-semibold leading-relaxed"></textarea>
           </div>
 
           <div class="space-y-3 pt-2">
-            <button type="submit" id="submit-btn" class="w-full bg-[#111111] text-white font-bold py-4 rounded-2xl text-base shadow-md">儲存重點</button>
-            <button type="button" id="delete-btn" onclick="handleFormDelete()" class="hidden w-full bg-red-50 text-red-500 font-bold py-4 rounded-2xl text-base">刪除重點</button>
+            <button type="submit" id="submit-btn" class="w-full bg-[#111111] text-white font-extrabold py-4.5 rounded-2xl text-lg shadow-md active:scale-98 transition-transform">儲存重點</button>
+            <button type="button" id="delete-btn" onclick="handleFormDelete()" class="hidden w-full bg-[#F6F6F6] text-gray-700 font-extrabold py-4.5 rounded-2xl text-lg active:scale-98 transition-transform">刪除重點</button>
           </div>
         </form>
       </div>
 
     </main>
 
-    <!-- Bottom Nav -->
+    <!-- 底部固定 Bar (文字完美置中、+ 號加大) -->
     <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-md bg-[#111111] text-white rounded-full z-40 p-2 shadow-2xl">
-      <div class="flex justify-between items-center px-4">
-        <button onclick="switchTab('books')" id="nav-books" class="px-5 py-3 font-bold text-sm text-white transition-opacity">
+      <div class="flex justify-between items-center px-6 h-14">
+        <button onclick="switchTab('books')" id="nav-books" class="flex-1 flex items-center justify-center text-center font-extrabold text-base text-white transition-opacity">
           書庫
         </button>
 
-        <button onclick="switchTab('add')" id="nav-add" class="w-11 h-11 bg-[#7C3AED] text-white rounded-full flex items-center justify-center font-bold text-xl active:scale-95 transition-transform">
+        <button onclick="switchTab('add')" id="nav-add" class="w-14 h-14 bg-[#7C3AED] text-white rounded-full flex items-center justify-center font-black text-3xl shrink-0 shadow-lg active:scale-90 transition-transform -mt-1">
           +
         </button>
 
-        <button onclick="switchTab('categories')" id="nav-categories" class="px-5 py-3 font-bold text-sm text-gray-400 transition-opacity">
+        <button onclick="switchTab('categories')" id="nav-categories" class="flex-1 flex items-center justify-center text-center font-extrabold text-base text-gray-400 transition-opacity">
           主題
         </button>
       </div>
@@ -122,19 +126,32 @@
   <script>
     const SUPABASE_URL = 'https://uumglpeoqmkplcnccfrq.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_63y7i9dorGmGi34pP6rCRQ_5xuUo1r_';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
     let allNotes = [];
     let currentTab = 'books';
     let activeBook = null;
     let activeCategory = null;
 
+    window.addEventListener('popstate', (e) => {
+      if (e.state) {
+        currentTab = e.state.tab || 'books';
+        activeBook = e.state.book || null;
+        activeCategory = e.state.category || null;
+        renderCurrentView(false);
+      }
+    });
+
     async function fetchNotes() {
+      if (!supabaseClient) return;
       const { data, error } = await supabaseClient.from('book_notes').select('*').order('created_at', { ascending: false });
-      if (error) return;
-      allNotes = data;
+      if (error) {
+        console.error(error);
+        return;
+      }
+      allNotes = data || [];
       updateDatalists();
-      renderCurrentView();
+      renderCurrentView(false);
     }
 
     function updateDatalists() {
@@ -144,24 +161,32 @@
       document.getElementById('category-list').innerHTML = categories.map(c => `<option value="${c}">`).join('');
     }
 
+    function pushAppState() {
+      history.pushState({ tab: currentTab, book: activeBook, category: activeCategory }, '');
+    }
+
     function switchTab(tab) {
       currentTab = tab;
       activeBook = null;
       activeCategory = null;
-      renderCurrentView();
+      pushAppState();
+      renderCurrentView(false);
     }
 
     function goBack() {
       if (activeBook || activeCategory) {
         activeBook = null;
         activeCategory = null;
-        renderCurrentView();
+        pushAppState();
+        renderCurrentView(false);
       } else {
         switchTab('books');
       }
     }
 
-    function renderCurrentView() {
+    function renderCurrentView(pushHistory = true) {
+      if (pushHistory) pushAppState();
+
       const title = document.getElementById('page-title');
       const backBtn = document.getElementById('back-btn');
       const navBooks = document.getElementById('nav-books');
@@ -170,8 +195,8 @@
       const views = ['view-books', 'view-book-detail', 'view-categories', 'view-category-detail', 'view-add'];
       views.forEach(v => document.getElementById(v).classList.add('hidden'));
 
-      navBooks.className = "px-5 py-3 font-bold text-sm text-gray-400";
-      navCat.className = "px-5 py-3 font-bold text-sm text-gray-400";
+      navBooks.className = "flex-1 flex items-center justify-center text-center font-extrabold text-base text-gray-400";
+      navCat.className = "flex-1 flex items-center justify-center text-center font-extrabold text-base text-gray-400";
       backBtn.classList.add('hidden');
 
       if (activeBook) {
@@ -186,12 +211,12 @@
         renderCategoryDetailView();
       } else if (currentTab === 'books') {
         title.innerText = "Library";
-        navBooks.className = "px-5 py-3 font-bold text-sm text-white";
+        navBooks.className = "flex-1 flex items-center justify-center text-center font-extrabold text-base text-white";
         document.getElementById('view-books').classList.remove('hidden');
         renderBooksView();
       } else if (currentTab === 'categories') {
         title.innerText = "Topics";
-        navCat.className = "px-5 py-3 font-bold text-sm text-white";
+        navCat.className = "flex-1 flex items-center justify-center text-center font-extrabold text-base text-white";
         document.getElementById('view-categories').classList.remove('hidden');
         renderCategoriesView();
       } else if (currentTab === 'add') {
@@ -200,38 +225,34 @@
       }
     }
 
-    // 1. 書庫列表
     function renderBooksView() {
       const container = document.getElementById('books-list');
       const bookNames = [...new Set(allNotes.map(n => n.book_title).filter(Boolean))];
 
       if (bookNames.length === 0) {
-        container.innerHTML = `<p class="text-center text-gray-400 py-12 font-medium">尚未新增任何書籍</p>`;
+        container.innerHTML = `<p class="text-center text-gray-400 py-12 font-bold text-base">尚未新增任何書籍</p>`;
         return;
       }
 
       container.innerHTML = bookNames.map(book => `
-        <div onclick="openBookDetail('${book}')" class="bg-[#F6F6F6] rounded-2xl p-5 cursor-pointer hover:bg-gray-100 transition flex justify-between items-center">
-          <h2 class="text-base font-extrabold text-[#111111]">${book}</h2>
-          <span class="text-gray-400 font-bold">→</span>
+        <div onclick="openBookDetail('${book}')" class="bg-[#F6F6F6] rounded-2xl p-5 cursor-pointer active:scale-98 transition flex justify-between items-center">
+          <h2 class="text-lg font-black text-[#111111]">${book}</h2>
+          <span class="text-gray-400 font-extrabold text-lg">→</span>
         </div>
       `).join('');
     }
 
     function openBookDetail(book) {
       activeBook = book;
-      renderCurrentView();
+      renderCurrentView(true);
     }
 
-    // 1-1. 書籍獨立重點頁面
     function renderBookDetailView() {
       const container = document.getElementById('book-detail-list');
       const notes = allNotes.filter(n => n.book_title === activeBook);
-
       container.innerHTML = notes.map(note => renderFullCard(note)).join('');
     }
 
-    // 2. 主題列表 (預覽前三條重點)
     function renderCategoriesView() {
       const container = document.getElementById('categories-list');
       const catMap = {};
@@ -244,7 +265,7 @@
 
       const categories = Object.keys(catMap);
       if (categories.length === 0) {
-        container.innerHTML = `<p class="text-center text-gray-400 py-12 font-medium">尚未新增任何主題</p>`;
+        container.innerHTML = `<p class="text-center text-gray-400 py-12 font-bold text-base">尚未新增任何主題</p>`;
         return;
       }
 
@@ -255,12 +276,12 @@
 
         return `
           <div class="space-y-3">
-            <h2 class="text-xl font-black tracking-tight text-[#111111] px-1">${cat}</h2>
+            <h2 class="text-2xl font-black tracking-tight text-[#111111] px-1">${cat}</h2>
             <div class="space-y-3">
               ${displayNotes.map(note => renderPreviewCard(note)).join('')}
             </div>
             ${hasMore ? `
-              <button onclick="openCategoryDetail('${cat}')" class="text-xs font-extrabold text-[#7C3AED] px-1 pt-1">
+              <button onclick="openCategoryDetail('${cat}')" class="text-sm font-extrabold text-[#7C3AED] px-1 pt-1">
                 更多...
               </button>
             ` : ''}
@@ -271,56 +292,58 @@
 
     function openCategoryDetail(cat) {
       activeCategory = cat;
-      renderCurrentView();
+      renderCurrentView(true);
     }
 
-    // 2-1. 主題獨立重點頁面
     function renderCategoryDetailView() {
       const container = document.getElementById('category-detail-list');
       const notes = allNotes.filter(n => (n.category || '未分類') === activeCategory);
-
       container.innerHTML = notes.map(note => renderFullCard(note)).join('');
     }
 
-    // 主題頁預覽卡片 (僅列出劃線)
+    const penIconSvg = `
+      <svg class="w-5 h-5 text-[#7C3AED]" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"></path>
+      </svg>
+    `;
+
     function renderPreviewCard(note) {
       const paragraphs = note.quote.split('\n').filter(line => line.trim() !== '');
       const quotesHtml = paragraphs.map(p => `
-        <li class="flex items-start gap-2.5 mb-1">
-          <span class="w-1.5 h-1.5 rounded-full bg-[#111111] mt-2 shrink-0"></span>
-          <span class="text-sm font-medium text-[#111111] leading-relaxed">${p}</span>
+        <li class="flex items-start gap-3 mb-1.5">
+          <span class="w-2 h-2 rounded-full bg-[#111111] mt-2 shrink-0"></span>
+          <span class="text-base font-semibold text-[#111111] leading-relaxed">${p}</span>
         </li>
       `).join('');
 
       return `
-        <div class="bg-[#F6F6F6] p-4 rounded-2xl relative">
-          <div class="flex justify-between items-center mb-2">
-            <p class="text-xs font-bold text-gray-400">${note.book_title}</p>
-            <button onclick="editNote(${note.id})" class="text-gray-400 hover:text-black p-1">✏️</button>
+        <div class="bg-[#F6F6F6] p-5 rounded-2xl relative">
+          <div class="flex justify-between items-center mb-3">
+            <p class="text-xs font-black text-gray-400 uppercase tracking-wider">${note.book_title}</p>
+            <button onclick="editNote(${note.id})" class="p-1.5 hover:bg-gray-200 rounded-lg transition">${penIconSvg}</button>
           </div>
           <ul class="pl-1">${quotesHtml}</ul>
         </div>
       `;
     }
 
-    // 完整重點卡片 (書籍頁與主題完整頁使用)
     function renderFullCard(note) {
       const paragraphs = note.quote.split('\n').filter(line => line.trim() !== '');
       const quotesHtml = paragraphs.map(p => `
-        <li class="flex items-start gap-2.5 mb-1.5">
-          <span class="w-1.5 h-1.5 rounded-full bg-[#7C3AED] mt-2 shrink-0"></span>
-          <span class="text-sm font-medium text-[#111111] leading-relaxed">${p}</span>
+        <li class="flex items-start gap-3 mb-2">
+          <span class="w-2 h-2 rounded-full bg-[#7C3AED] mt-2 shrink-0"></span>
+          <span class="text-base font-semibold text-[#111111] leading-relaxed">${p}</span>
         </li>
       `).join('');
 
       return `
-        <div class="bg-[#F6F6F6] p-4 rounded-2xl space-y-2 relative">
+        <div class="bg-[#F6F6F6] p-5 rounded-2xl space-y-3 relative">
           <div class="flex justify-between items-center">
-            <p class="text-xs font-bold text-gray-400">${note.category || '未分類'}</p>
-            <button onclick="editNote(${note.id})" class="text-gray-400 hover:text-black p-1">✏️</button>
+            <p class="text-xs font-black text-gray-400 uppercase tracking-wider">${note.category || '未分類'}</p>
+            <button onclick="editNote(${note.id})" class="p-1.5 hover:bg-gray-200 rounded-lg transition">${penIconSvg}</button>
           </div>
           <ul class="pl-1">${quotesHtml}</ul>
-          ${note.thought ? `<p class="text-xs text-gray-600 font-medium bg-white p-3 rounded-xl mt-2">${note.thought}</p>` : ''}
+          ${note.thought ? `<p class="text-sm text-gray-700 font-medium bg-white p-3.5 rounded-xl mt-2 leading-relaxed">${note.thought}</p>` : ''}
         </div>
       `;
     }
@@ -351,7 +374,6 @@
       if (!SpeechRecognition) return alert("您的設備不支援語音輸入");
       const recognition = new SpeechRecognition();
       recognition.lang = 'zh-TW';
-      recognition.onstart = () => {};
       recognition.onresult = (e) => {
         const val = document.getElementById(targetId).value;
         document.getElementById(targetId).value = val ? val + '\n' + e.results[0][0].transcript : e.results[0][0].transcript;
@@ -362,7 +384,7 @@
     document.getElementById('note-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = document.getElementById('submit-btn');
-      btn.innerText = '處理中...'; btn.disabled = true;
+      btn.innerText = '儲存中...'; btn.disabled = true;
 
       const noteId = document.getElementById('note-id').value;
       const payload = {
@@ -381,12 +403,13 @@
         error = res.error;
       }
 
-      if (error) alert('失敗：' + error.message);
-      else { 
-        fetchNotes();
+      btn.disabled = false;
+      if (error) {
+        alert('儲存失敗：' + error.message);
+      } else { 
+        await fetchNotes();
         switchTab('books');
       }
-      btn.disabled = false;
     });
 
     async function handleFormDelete() {
@@ -394,12 +417,15 @@
       if (noteId && confirm('確定要刪除這條重點嗎？')) {
         const { error } = await supabaseClient.from('book_notes').delete().eq('id', noteId);
         if (!error) {
-          fetchNotes();
+          await fetchNotes();
           switchTab('books');
+        } else {
+          alert('刪除失敗：' + error.message);
         }
       }
     }
 
+    pushAppState();
     fetchNotes();
   </script>
 </body>
