@@ -13,7 +13,6 @@
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Tesseract.js 用於圖片 OCR 文字辨識 -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <style>
@@ -25,10 +24,7 @@
       pointer-events: none;
       display: block;
     }
-    /* 塗鴉 Canvas 樣式 */
-    .canvas-container {
-      touch-action: none;
-    }
+    .canvas-container { touch-action: none; }
   </style>
 </head>
 <body class="min-h-screen pb-safe select-none bg-[#FFFFFF] flex flex-col items-center">
@@ -39,7 +35,7 @@
     <header class="sticky top-0 bg-white/95 backdrop-blur-md z-10 px-6 pt-8 pb-4 flex justify-between items-center border-b border-gray-100">
       <div class="flex items-center gap-3">
         <button id="back-btn" onclick="goBack()" class="hidden text-2xl font-black text-[#111111] active:opacity-60">←</button>
-        <h1 id="page-title" class="text-2xl font-black tracking-tight text-[#111111]">Library</h1>
+        <h1 id="page-title" class="text-2xl font-black tracking-tight text-[#111111]">新增重點</h1>
       </div>
       <div class="w-3 h-3 rounded-full bg-[#7C3AED]"></div>
     </header>
@@ -47,7 +43,7 @@
     <main class="flex-1 px-6 pt-5">
       
       <!-- 頁面 1: 書庫列表 -->
-      <div id="view-books" class="space-y-4">
+      <div id="view-books" class="hidden space-y-4">
         <div id="books-list" class="space-y-4">
           <p class="text-center text-gray-400 py-12 font-bold text-base">載入中...</p>
         </div>
@@ -59,7 +55,13 @@
       </div>
 
       <!-- 頁面 2: 主題列表 -->
-      <div id="view-categories" class="space-y-6 hidden">
+      <div id="view-categories" class="hidden space-y-6">
+        <!-- 主題篩選下拉選單 -->
+        <div>
+          <select id="category-filter" onchange="filterCategory(this.value)" class="w-full bg-[#F6F6F6] text-[#111111] px-4 py-3 rounded-xl font-bold border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none">
+            <option value="ALL">全部主題</option>
+          </select>
+        </div>
         <div id="categories-list" class="space-y-6">
           <p class="text-center text-gray-400 py-12 font-bold text-base">載入中...</p>
         </div>
@@ -70,8 +72,8 @@
         <div id="category-detail-list" class="space-y-4"></div>
       </div>
 
-      <!-- 頁面 3: 新增/編輯完整頁面 -->
-      <div id="view-add" class="hidden space-y-6 pb-8">
+      <!-- 頁面 3: 新增/編輯頁面（第一頁預設顯示） -->
+      <div id="view-add" class="space-y-6 pb-8">
         <form id="note-form" class="space-y-6">
           <input type="hidden" id="note-id">
 
@@ -92,17 +94,14 @@
             <div class="flex justify-between items-center mb-2">
               <label class="block text-sm font-extrabold text-gray-400 uppercase tracking-wider">劃線重點</label>
               <div class="flex items-center gap-2">
-                <!-- 拍照塗鴉按鈕 -->
                 <button type="button" onclick="triggerCamera()" title="拍照劃線辨識" class="p-2 rounded-full text-[#7C3AED] bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 active:scale-95 transition flex items-center gap-1">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574v9.176A2.25 2.25 0 004.5 21h15a2.25 2.25 0 002.25-2.25V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"></path>
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"></path>
                   </svg>
                 </button>
-                <!-- 隱藏的 input 用於選取照片 -->
                 <input type="file" id="camera-input" accept="image/*" capture="environment" class="hidden" onchange="handleImageUpload(event)">
 
-                <!-- 黃色圓圈劃重點按鈕 -->
                 <button type="button" onclick="applyHighlight('quote')" title="劃黃色重點" class="w-7 h-7 bg-yellow-300 rounded-full shadow-sm active:scale-90 transition border border-yellow-400/30"></button>
                 <button type="button" onclick="startSpeech('quote')" title="語音輸入" class="p-2 rounded-full text-[#7C3AED] bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 active:scale-95 transition">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -130,7 +129,6 @@
             <div id="thought" contenteditable="true" data-placeholder="輸入個人心得（選填）..." class="w-full min-h-[90px] bg-[#F6F6F6] text-[#111111] p-5 rounded-2xl focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-semibold leading-relaxed overflow-y-auto"></div>
           </div>
 
-          <!-- 按鈕區域 -->
           <div class="space-y-3 pt-2">
             <button type="submit" id="submit-btn" class="w-full bg-[#111111] text-white font-extrabold py-4 rounded-full text-base shadow-md active:scale-98 transition-transform">儲存重點</button>
             <button type="button" id="delete-btn" onclick="handleFormDelete()" class="hidden w-full bg-[#F6F6F6] text-gray-700 font-extrabold py-4 rounded-full text-base active:scale-98 transition-transform">刪除重點</button>
@@ -140,10 +138,10 @@
 
     </main>
 
-    <!-- 底部固定 Bar -->
+    <!-- 固定 Bottom Bar -->
     <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-md bg-[#111111] text-white rounded-full z-40 px-6 py-1.5 shadow-2xl">
       <div class="flex justify-between items-center h-10">
-        <button onclick="switchTab('books')" id="nav-books" class="flex-1 flex items-center justify-center text-center font-extrabold text-sm text-white transition-opacity">
+        <button onclick="switchTab('books')" id="nav-books" class="flex-1 flex items-center justify-center text-center font-extrabold text-sm text-gray-400 transition-opacity">
           書庫
         </button>
 
@@ -159,19 +157,17 @@
 
   </div>
 
-  <!-- 拍照黃色塗鴉Modal彈窗 -->
+  <!-- 塗鴉 Modal -->
   <div id="doodle-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex flex-col items-center justify-between p-4 backdrop-blur-sm">
     <div class="w-full flex justify-between items-center text-white py-2">
       <h3 class="text-lg font-bold">用手指劃出黃色重點</h3>
       <button onclick="closeDoodleModal()" class="text-gray-300 font-bold px-2 py-1">關閉</button>
     </div>
 
-    <!-- 畫布容器 -->
     <div class="relative flex-1 w-full flex items-center justify-center overflow-hidden canvas-container">
       <canvas id="doodle-canvas" class="max-w-full max-h-full rounded-xl shadow-lg border border-white/20"></canvas>
     </div>
 
-    <!-- 工具列與按鈕 -->
     <div class="w-full max-w-md bg-white p-4 rounded-3xl space-y-3 mt-3">
       <div class="flex items-center justify-between px-2">
         <span class="text-xs font-bold text-gray-500 uppercase">筆刷粗細</span>
@@ -190,23 +186,42 @@
     const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
     let allNotes = [];
-    let currentTab = 'books';
+    let currentTab = 'add'; // 預設進入新增頁面
     let activeBook = null;
     let activeCategory = null;
+    let selectedCategoryFilter = 'ALL';
 
-    // 塗鴉相關變數
     let loadedImage = null;
     const canvas = document.getElementById('doodle-canvas');
     const ctx = canvas.getContext('2d');
     let isDrawing = false;
 
-    window.addEventListener('popstate', (e) => {
-      if (e.state) {
-        currentTab = e.state.tab || 'books';
-        activeBook = e.state.book || null;
-        activeCategory = e.state.category || null;
-        renderCurrentView(false);
+    // 從網頁網址哈希 (Hash) 初始化頁面狀態，解決刷新跳回首頁問題
+    function initAppStateFromHash() {
+      const hash = location.hash.replace('#', '');
+      if (hash) {
+        const parts = hash.split('/');
+        currentTab = parts[0] || 'add';
+        if (parts[0] === 'book' && parts[1]) activeBook = decodeURIComponent(parts[1]);
+        if (parts[0] === 'category' && parts[1]) activeCategory = decodeURIComponent(parts[1]);
+      } else {
+        currentTab = 'add';
       }
+    }
+
+    function updateHash() {
+      if (activeBook) {
+        location.hash = `book/${encodeURIComponent(activeBook)}`;
+      } else if (activeCategory) {
+        location.hash = `category/${encodeURIComponent(activeCategory)}`;
+      } else {
+        location.hash = currentTab;
+      }
+    }
+
+    window.addEventListener('popstate', () => {
+      initAppStateFromHash();
+      renderCurrentView();
     });
 
     async function fetchNotes() {
@@ -218,7 +233,8 @@
       }
       allNotes = data || [];
       updateDatalists();
-      renderCurrentView(false);
+      updateCategoryDropdown();
+      renderCurrentView();
     }
 
     function updateDatalists() {
@@ -228,37 +244,42 @@
       document.getElementById('category-list').innerHTML = categories.map(c => `<option value="${c}">`).join('');
     }
 
-    function pushAppState() {
-      history.pushState({ tab: currentTab, book: activeBook, category: activeCategory }, '');
+    function updateCategoryDropdown() {
+      const select = document.getElementById('category-filter');
+      const categories = [...new Set(allNotes.map(n => n.category || '未分類'))];
+      select.innerHTML = `<option value="ALL">全部主題</option>` + categories.map(c => `<option value="${c}">${c}</option>`).join('');
+      select.value = selectedCategoryFilter;
     }
 
     function switchTab(tab) {
       currentTab = tab;
       activeBook = null;
       activeCategory = null;
-      pushAppState();
-      renderCurrentView(false);
+      updateHash();
+      renderCurrentView();
     }
 
-    function openAddNew() {
+    function openAddNew(defaultBookTitle = '') {
       resetForm();
+      if (defaultBookTitle) {
+        document.getElementById('book_title').value = defaultBookTitle;
+      }
       switchTab('add');
     }
 
     function goBack() {
-      if (activeBook || activeCategory) {
+      if (activeBook) {
         activeBook = null;
-        activeCategory = null;
-        pushAppState();
-        renderCurrentView(false);
-      } else {
         switchTab('books');
+      } else if (activeCategory) {
+        activeCategory = null;
+        switchTab('categories');
+      } else {
+        switchTab('add');
       }
     }
 
-    function renderCurrentView(pushHistory = true) {
-      if (pushHistory) pushAppState();
-
+    function renderCurrentView() {
       const title = document.getElementById('page-title');
       const backBtn = document.getElementById('back-btn');
       const navBooks = document.getElementById('nav-books');
@@ -307,22 +328,31 @@
       }
 
       container.innerHTML = bookNames.map(book => `
-        <div onclick="openBookDetail('${book}')" class="bg-[#F6F6F6] rounded-2xl p-5 cursor-pointer active:scale-98 transition flex justify-between items-center">
-          <h2 class="text-lg font-black text-[#111111]">${book}</h2>
-          <span class="text-gray-400 font-extrabold text-lg">→</span>
+        <div class="bg-[#F6F6F6] rounded-2xl p-5 flex justify-between items-center">
+          <h2 onclick="openBookDetail('${book}')" class="text-lg font-black text-[#111111] flex-1 cursor-pointer">${book}</h2>
+          <div class="flex items-center gap-3">
+            <button onclick="openAddNew('${book}')" title="為這本書新增重點" class="w-8 h-8 rounded-full bg-[#7C3AED]/10 text-[#7C3AED] font-black flex items-center justify-center text-lg active:scale-90 transition">+</button>
+            <span onclick="openBookDetail('${book}')" class="text-gray-400 font-extrabold text-lg cursor-pointer">→</span>
+          </div>
         </div>
       `).join('');
     }
 
     function openBookDetail(book) {
       activeBook = book;
-      renderCurrentView(true);
+      updateHash();
+      renderCurrentView();
     }
 
     function renderBookDetailView() {
       const container = document.getElementById('book-detail-list');
       const notes = allNotes.filter(n => n.book_title === activeBook);
-      container.innerHTML = notes.map(note => renderFullCard(note)).join('');
+      container.innerHTML = notes.map(note => renderFullCard(note, false)).join('');
+    }
+
+    function filterCategory(cat) {
+      selectedCategoryFilter = cat;
+      renderCategoriesView();
     }
 
     function renderCategoriesView() {
@@ -331,6 +361,7 @@
 
       allNotes.forEach(n => {
         const cat = n.category || '未分類';
+        if (selectedCategoryFilter !== 'ALL' && cat !== selectedCategoryFilter) return;
         if (!catMap[cat]) catMap[cat] = [];
         catMap[cat].push(n);
       });
@@ -343,20 +374,12 @@
 
       container.innerHTML = categories.map(cat => {
         const notes = catMap[cat];
-        const displayNotes = notes.slice(0, 3);
-        const hasMore = notes.length > 3;
-
         return `
           <div class="space-y-3">
             <h2 class="text-2xl font-black tracking-tight text-[#111111] px-1">${cat}</h2>
             <div class="space-y-3">
-              ${displayNotes.map(note => renderPreviewCard(note)).join('')}
+              ${notes.map(note => renderPreviewCard(note, false)).join('')}
             </div>
-            ${hasMore ? `
-              <button onclick="openCategoryDetail('${cat}')" class="text-sm font-extrabold text-[#7C3AED] px-1 pt-1">
-                更多...
-              </button>
-            ` : ''}
           </div>
         `;
       }).join('');
@@ -364,39 +387,35 @@
 
     function openCategoryDetail(cat) {
       activeCategory = cat;
-      renderCurrentView(true);
+      updateHash();
+      renderCurrentView();
     }
 
     function renderCategoryDetailView() {
       const container = document.getElementById('category-detail-list');
       const notes = allNotes.filter(n => (n.category || '未分類') === activeCategory);
-      container.innerHTML = notes.map(note => renderFullCard(note)).join('');
+      container.innerHTML = notes.map(note => renderFullCard(note, false)).join('');
     }
 
-    const penIconSvg = `
-      <svg class="w-5 h-5 text-[#7C3AED]" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"></path>
-      </svg>
-    `;
-
-    function renderPreviewCard(note) {
+    // 主題列表隱藏編輯 icon
+    function renderPreviewCard(note, showEdit = false) {
       return `
         <div class="bg-[#F6F6F6] p-5 rounded-2xl relative">
           <div class="flex justify-between items-center mb-3">
             <p class="text-xs font-black text-gray-400 uppercase tracking-wider">${note.book_title}</p>
-            <button onclick="editNote(${note.id})" class="p-1.5 hover:bg-gray-200 rounded-lg transition">${penIconSvg}</button>
+            ${showEdit ? `<button onclick="editNote(${note.id})" class="p-1.5 hover:bg-gray-200 rounded-lg transition">✏️</button>` : ''}
           </div>
           <div class="text-base font-semibold text-[#111111] leading-relaxed pl-1">${note.quote}</div>
         </div>
       `;
     }
 
-    function renderFullCard(note) {
+    function renderFullCard(note, showEdit = false) {
       return `
         <div class="bg-[#F6F6F6] p-5 rounded-2xl space-y-3 relative">
           <div class="flex justify-between items-center">
             <p class="text-xs font-black text-gray-400 uppercase tracking-wider">${note.category || '未分類'}</p>
-            <button onclick="editNote(${note.id})" class="p-1.5 hover:bg-gray-200 rounded-lg transition">${penIconSvg}</button>
+            ${showEdit ? `<button onclick="editNote(${note.id})" class="p-1.5 hover:bg-gray-200 rounded-lg transition">✏️</button>` : ''}
           </div>
           <div class="text-base font-semibold text-[#111111] leading-relaxed pl-1">${note.quote}</div>
           ${note.thought ? `<div class="text-sm text-gray-700 font-medium bg-white p-3.5 rounded-xl mt-2 leading-relaxed">${note.thought}</div>` : ''}
@@ -468,7 +487,7 @@
       recognition.start();
     }
 
-    // --- 拍照與塗鴉劃重點功能 ---
+    // --- 拍照與塗鴉劃重點 ---
 
     function triggerCamera() {
       document.getElementById('camera-input').click();
@@ -552,7 +571,7 @@
       const size = document.getElementById('brush-size').value;
 
       ctx.lineTo(pos.x, pos.y);
-      ctx.strokeStyle = 'rgba(254, 240, 138, 0.65)'; // 半透明黃色 (Yellow-200)
+      ctx.strokeStyle = 'rgba(254, 240, 138, 0.65)';
       ctx.lineWidth = size;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
@@ -563,43 +582,37 @@
       isDrawing = false;
     }
 
-    // 塗鴉區域提取並進行 OCR 文字辨識
     async function processDoodleOCR() {
       const btn = document.getElementById('ocr-btn');
-      btn.innerText = '文字辨識中 (請稍候)...';
+      btn.innerText = '文字辨識中...';
       btn.disabled = true;
 
       try {
-        // 使用 Tesseract.js 進行繁體中文辨識
         const { data: { text } } = await Tesseract.recognize(
           canvas.toDataURL(),
-          'chi_tra',
-          { logger: m => console.log(m) }
+          'chi_tra'
         );
 
-        // 清理無用換行與空白字元
         const cleanText = text.replace(/\s+/g, ' ').trim();
 
         if (cleanText) {
           const editor = document.getElementById('quote');
-          // 帶入並自動套用黃色重點標籤
           const highlightedHtml = `<mark class="bg-yellow-200 px-1 rounded text-[#111111]">${cleanText}</mark>`;
           editor.innerHTML = editor.innerHTML ? editor.innerHTML + '<br>' + highlightedHtml : highlightedHtml;
           closeDoodleModal();
         } else {
-          alert('未能辨識出清晰文字，請再試一次或劃大範圍。');
+          alert('未能辨識出文字，請再試一次');
         }
       } catch (err) {
         console.error(err);
-        alert('辨識失敗，請檢查網路連線或重試');
+        alert('辨識失敗，請檢查網路連線');
       } finally {
         btn.innerText = '辨識畫線文字';
         btn.disabled = false;
       }
     }
 
-    // --- 資料表單提交與處裡 ---
-
+    // 表單提交：儲存成功後切換至「主題」列表
     document.getElementById('note-form').addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -634,7 +647,7 @@
         alert('儲存失敗：' + error.message);
       } else { 
         await fetchNotes();
-        switchTab('books');
+        switchTab('categories'); // 跳轉回主題列表
       }
     });
 
@@ -644,14 +657,14 @@
         const { error } = await supabaseClient.from('book_notes').delete().eq('id', noteId);
         if (!error) {
           await fetchNotes();
-          switchTab('books');
+          switchTab('categories');
         } else {
           alert('刪除失敗：' + error.message);
         }
       }
     }
 
-    pushAppState();
+    initAppStateFromHash();
     fetchNotes();
   </script>
 </body>
