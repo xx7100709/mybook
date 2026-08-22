@@ -17,6 +17,13 @@
   <style>
     body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #FFFFFF; color: #111111; }
     .pb-safe { padding-bottom: calc(7rem + env(safe-area-inset-bottom)); }
+    /* 富文本編輯區樣式 */
+    [contenteditable="true"]:empty:before {
+      content: attr(data-placeholder);
+      color: #9CA3AF;
+      pointer-events: none;
+      display: block;
+    }
   </style>
 </head>
 <body class="min-h-screen pb-safe select-none bg-[#FFFFFF] flex flex-col items-center">
@@ -75,28 +82,40 @@
             <datalist id="category-list"></datalist>
           </div>
 
+          <!-- 劃線重點 -->
           <div>
             <div class="flex justify-between items-center mb-2">
               <label class="block text-sm font-extrabold text-gray-400 uppercase tracking-wider">劃線重點</label>
-              <button type="button" onclick="startSpeech('quote')" title="語音輸入" class="p-2 rounded-full text-[#7C3AED] bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 active:scale-95 transition">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 003-3V6a3 3 0 00-6 0v6.75a3 3 0 003 3z"></path>
-                </svg>
-              </button>
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="applyHighlight('quote')" class="px-3 py-1 bg-yellow-200 text-yellow-900 rounded-lg text-xs font-black shadow-sm active:scale-95 transition">
+                  🖍 劃黃色重點
+                </button>
+                <button type="button" onclick="startSpeech('quote')" title="語音輸入" class="p-2 rounded-full text-[#7C3AED] bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 active:scale-95 transition">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 003-3V6a3 3 0 00-6 0v6.75a3 3 0 003 3z"></path>
+                  </svg>
+                </button>
+              </div>
             </div>
-            <textarea id="quote" required rows="5" class="w-full bg-[#F6F6F6] text-[#111111] p-5 rounded-2xl border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-semibold leading-relaxed"></textarea>
+            <div id="quote" contenteditable="true" data-placeholder="請輸入或黏貼重點..." class="w-full min-h-[140px] bg-[#F6F6F6] text-[#111111] p-5 rounded-2xl focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-semibold leading-relaxed overflow-y-auto"></div>
           </div>
 
+          <!-- 個人心得 -->
           <div>
             <div class="flex justify-between items-center mb-2">
               <label class="block text-sm font-extrabold text-gray-400 uppercase tracking-wider">個人心得</label>
-              <button type="button" onclick="startSpeech('thought')" title="語音輸入" class="p-2 rounded-full text-[#7C3AED] bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 active:scale-95 transition">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 003-3V6a3 3 0 00-6 0v6.75a3 3 0 003 3z"></path>
-                </svg>
-              </button>
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="applyHighlight('thought')" class="px-3 py-1 bg-yellow-200 text-yellow-900 rounded-lg text-xs font-black shadow-sm active:scale-95 transition">
+                  🖍 劃黃色重點
+                </button>
+                <button type="button" onclick="startSpeech('thought')" title="語音輸入" class="p-2 rounded-full text-[#7C3AED] bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 active:scale-95 transition">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 003-3V6a3 3 0 00-6 0v6.75a3 3 0 003 3z"></path>
+                  </svg>
+                </button>
+              </div>
             </div>
-            <textarea id="thought" rows="3" class="w-full bg-[#F6F6F6] text-[#111111] p-5 rounded-2xl border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-semibold leading-relaxed"></textarea>
+            <div id="thought" contenteditable="true" data-placeholder="輸入個人心得（選填）..." class="w-full min-h-[90px] bg-[#F6F6F6] text-[#111111] p-5 rounded-2xl focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-semibold leading-relaxed overflow-y-auto"></div>
           </div>
 
           <div class="space-y-3 pt-2">
@@ -317,49 +336,36 @@
     `;
 
     function renderPreviewCard(note) {
-      const paragraphs = note.quote.split('\n').filter(line => line.trim() !== '');
-      const quotesHtml = paragraphs.map(p => `
-        <li class="flex items-start gap-3 mb-1.5">
-          <span class="w-2 h-2 rounded-full bg-[#111111] mt-2 shrink-0"></span>
-          <span class="text-base font-semibold text-[#111111] leading-relaxed">${p}</span>
-        </li>
-      `).join('');
-
       return `
         <div class="bg-[#F6F6F6] p-5 rounded-2xl relative">
           <div class="flex justify-between items-center mb-3">
             <p class="text-xs font-black text-gray-400 uppercase tracking-wider">${note.book_title}</p>
             <button onclick="editNote(${note.id})" class="p-1.5 hover:bg-gray-200 rounded-lg transition">${penIconSvg}</button>
           </div>
-          <ul class="pl-1">${quotesHtml}</ul>
+          <div class="text-base font-semibold text-[#111111] leading-relaxed pl-1">${note.quote}</div>
         </div>
       `;
     }
 
     function renderFullCard(note) {
-      const paragraphs = note.quote.split('\n').filter(line => line.trim() !== '');
-      const quotesHtml = paragraphs.map(p => `
-        <li class="flex items-start gap-3 mb-2">
-          <span class="w-2 h-2 rounded-full bg-[#7C3AED] mt-2 shrink-0"></span>
-          <span class="text-base font-semibold text-[#111111] leading-relaxed">${p}</span>
-        </li>
-      `).join('');
-
       return `
         <div class="bg-[#F6F6F6] p-5 rounded-2xl space-y-3 relative">
           <div class="flex justify-between items-center">
             <p class="text-xs font-black text-gray-400 uppercase tracking-wider">${note.category || '未分類'}</p>
             <button onclick="editNote(${note.id})" class="p-1.5 hover:bg-gray-200 rounded-lg transition">${penIconSvg}</button>
           </div>
-          <ul class="pl-1">${quotesHtml}</ul>
-          ${note.thought ? `<p class="text-sm text-gray-700 font-medium bg-white p-3.5 rounded-xl mt-2 leading-relaxed">${note.thought}</p>` : ''}
+          <div class="text-base font-semibold text-[#111111] leading-relaxed pl-1">${note.quote}</div>
+          ${note.thought ? `<div class="text-sm text-gray-700 font-medium bg-white p-3.5 rounded-xl mt-2 leading-relaxed">${note.thought}</div>` : ''}
         </div>
       `;
     }
 
     function resetForm() {
       document.getElementById('note-id').value = '';
-      document.getElementById('note-form').reset();
+      document.getElementById('book_title').value = '';
+      document.getElementById('category').value = '';
+      document.getElementById('quote').innerHTML = '';
+      document.getElementById('thought').innerHTML = '';
       document.getElementById('submit-btn').innerText = "儲存重點";
       document.getElementById('delete-btn').classList.add('hidden');
     }
@@ -370,12 +376,43 @@
       document.getElementById('note-id').value = note.id;
       document.getElementById('book_title').value = note.book_title;
       document.getElementById('category').value = note.category || '';
-      document.getElementById('quote').value = note.quote;
-      document.getElementById('thought').value = note.thought || '';
+      document.getElementById('quote').innerHTML = note.quote;
+      document.getElementById('thought').innerHTML = note.thought || '';
 
       document.getElementById('submit-btn').innerText = "儲存重點";
       document.getElementById('delete-btn').classList.remove('hidden');
       switchTab('add');
+    }
+
+    // 螢光筆劃線處理機制
+    function applyHighlight(targetId) {
+      const editor = document.getElementById(targetId);
+      const sel = window.getSelection();
+
+      if (!sel.rangeCount || sel.isCollapsed) {
+        alert("請先用手指拖曳選取要劃重點的文字！");
+        return;
+      }
+
+      const range = sel.getRangeAt(0);
+      
+      // 確保選取的文字屬於該編輯區域
+      if (!editor.contains(range.commonAncestorContainer)) {
+        alert("請選取該編輯區域內的文字");
+        return;
+      }
+
+      const span = document.createElement('mark');
+      span.className = 'bg-yellow-200 px-1 rounded text-[#111111]';
+      
+      try {
+        range.surroundContents(span);
+      } catch (e) {
+        // 處理跨標籤選取的例外情況
+        document.execCommand('hiliteColor', false, '#FEF08A');
+      }
+
+      sel.removeAllRanges();
     }
 
     function startSpeech(targetId) {
@@ -384,14 +421,22 @@
       const recognition = new SpeechRecognition();
       recognition.lang = 'zh-TW';
       recognition.onresult = (e) => {
-        const val = document.getElementById(targetId).value;
-        document.getElementById(targetId).value = val ? val + '\n' + e.results[0][0].transcript : e.results[0][0].transcript;
+        const editor = document.getElementById(targetId);
+        const text = e.results[0][0].transcript;
+        editor.innerHTML = editor.innerHTML ? editor.innerHTML + '<br>' + text : text;
       };
       recognition.start();
     }
 
     document.getElementById('note-form').addEventListener('submit', async (e) => {
       e.preventDefault();
+
+      const quoteHtml = document.getElementById('quote').innerHTML.trim();
+      if (!quoteHtml) {
+        alert("請輸入劃線重點！");
+        return;
+      }
+
       const btn = document.getElementById('submit-btn');
       btn.innerText = '儲存中...'; btn.disabled = true;
 
@@ -399,8 +444,8 @@
       const payload = {
         book_title: document.getElementById('book_title').value,
         category: document.getElementById('category').value || '未分類',
-        quote: document.getElementById('quote').value,
-        thought: document.getElementById('thought').value
+        quote: quoteHtml,
+        thought: document.getElementById('thought').innerHTML.trim()
       };
 
       let error;
