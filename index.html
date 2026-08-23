@@ -205,7 +205,6 @@
 
     let maskMinX = Infinity, maskMinY = Infinity, maskMaxX = -Infinity, maskMaxY = -Infinity;
 
-    // 清理 HTML 與隱藏標籤，若無任何純文字內容則回傳 null
     function cleanHtmlContent(html) {
       if (!html) return null;
       let textOnly = html.replace(/<[^>]*>/g, '');
@@ -213,7 +212,6 @@
       return textOnly.length === 0 ? null : html.trim();
     }
 
-    // 檢查字串是否包含真正的有效文字（徹底排除 null/undefined/空白）
     function hasValidContent(text) {
       if (!text || text === 'null' || text === 'undefined') return false;
       const clean = text.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, '').replace(/\s+/g, '').trim();
@@ -311,13 +309,13 @@
       const title = document.getElementById('page-title');
       const backBtn = document.getElementById('back-btn');
       const navBooks = document.getElementById('nav-books');
-      const navCat = document.getElementById('nav-categories');
+      const navCat = document.getElementById('nav-[#7C3AED]');
 
       const views = ['view-books', 'view-book-detail', 'view-categories', 'view-category-detail', 'view-add'];
       views.forEach(v => document.getElementById(v).classList.add('hidden'));
 
-      navBooks.className = "flex-1 flex items-center justify-center text-center font-medium text-sm text-gray-400";
-      navCat.className = "flex-1 flex items-center justify-center text-center font-medium text-sm text-gray-400";
+      if (document.getElementById('nav-books')) document.getElementById('nav-books').className = "flex-1 flex items-center justify-center text-center font-medium text-sm text-gray-400";
+      if (document.getElementById('nav-categories')) document.getElementById('nav-categories').className = "flex-1 flex items-center justify-center text-center font-medium text-sm text-gray-400";
       backBtn.classList.add('hidden');
 
       if (activeBook) {
@@ -332,12 +330,12 @@
         renderCategoryDetailView();
       } else if (currentTab === 'books') {
         title.innerText = "Library";
-        navBooks.className = "flex-1 flex items-center justify-center text-center font-medium text-sm text-white";
+        if (document.getElementById('nav-books')) document.getElementById('nav-books').className = "flex-1 flex items-center justify-center text-center font-medium text-sm text-white";
         document.getElementById('view-books').classList.remove('hidden');
         renderBooksView();
       } else if (currentTab === 'categories') {
         title.innerText = "Topics";
-        navCat.className = "flex-1 flex items-center justify-center text-center font-medium text-sm text-white";
+        if (document.getElementById('nav-categories')) document.getElementById('nav-categories').className = "flex-1 flex items-center justify-center text-center font-medium text-sm text-white";
         document.getElementById('view-categories').classList.remove('hidden');
         renderCategoriesView();
       } else if (currentTab === 'add') {
@@ -446,11 +444,10 @@
       container.innerHTML = notes.map(note => renderFullCard(note)).join('');
     }
 
-    // 主頁面卡片渲染
     function renderPreviewCard(note) {
       const showThought = hasValidContent(note.thought);
       return `
-        <div onclick="editNote(${note.id})" class="bg-[#F6F6F6] p-5 rounded-2xl cursor-pointer active:scale-98 transition relative space-y-3">
+        <div onclick="editNote('${note.id}')" class="bg-[#F6F6F6] p-5 rounded-2xl cursor-pointer active:scale-98 transition relative space-y-3">
           <div class="flex justify-between items-center">
             <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">${note.book_title}</p>
           </div>
@@ -460,11 +457,10 @@
       `;
     }
 
-    // 內頁卡片渲染（已確保此處僅出現一次）
     function renderFullCard(note) {
       const showThought = hasValidContent(note.thought);
       return `
-        <div onclick="editNote(${note.id})" class="bg-[#F6F6F6] p-5 rounded-2xl space-y-3 cursor-pointer active:scale-98 transition relative">
+        <div onclick="editNote('${note.id}')" class="bg-[#F6F6F6] p-5 rounded-2xl space-y-3 cursor-pointer active:scale-98 transition relative">
           <div class="flex justify-between items-center">
             <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">${note.category || '未分類'}</p>
           </div>
@@ -484,19 +480,32 @@
       document.getElementById('delete-btn').classList.add('hidden');
     }
 
+    // 重點修復：點擊卡片帶入編輯頁與延遲載入 DOM
     function editNote(id) {
-      const note = allNotes.find(n => n.id === id);
-      if (!note) return;
-      document.getElementById('note-id').value = note.id;
-      document.getElementById('book_title').value = note.book_title;
-      document.getElementById('category').value = note.category || '';
-      document.getElementById('quote').innerHTML = note.quote;
-      document.getElementById('thought').innerHTML = note.thought || '';
+      const note = allNotes.find(n => String(n.id) === String(id));
+      if (!note) {
+        alert("找不到該筆重點！");
+        return;
+      }
 
-      document.getElementById('submit-btn').innerText = "儲存重點";
-      document.getElementById('delete-btn').classList.remove('hidden');
+      document.getElementById('note-id').value = note.id;
+      document.getElementById('book_title').value = note.book_title || '';
+      document.getElementById('category').value = note.category || '';
+
       switchTab('add');
-      scrollToTop();
+
+      setTimeout(() => {
+        const quoteEl = document.getElementById('quote');
+        const thoughtEl = document.getElementById('thought');
+
+        if (quoteEl) quoteEl.innerHTML = note.quote || '';
+        if (thoughtEl) thoughtEl.innerHTML = note.thought || '';
+
+        document.getElementById('submit-btn').innerText = "儲存重點";
+        document.getElementById('delete-btn').classList.remove('hidden');
+        
+        scrollToTop();
+      }, 50);
     }
 
     function preventFocusLoss(e) {
@@ -760,7 +769,7 @@
         book_title: document.getElementById('book_title').value,
         category: document.getElementById('category').value || '未分類',
         quote: quoteHtml,
-        thought: thoughtHtml // 當空的時侯就是 null
+        thought: thoughtHtml
       };
 
       let error;
@@ -779,7 +788,7 @@
         alert('儲存失敗：' + error.message);
       } else { 
         resetForm();
-        await fetchNotes(); // 重新拉取資料
+        await fetchNotes();
         switchTab('categories');
       }
     });
