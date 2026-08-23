@@ -56,8 +56,9 @@
             <option value="ALL">全部主題</option>
           </select>
 
+          <!-- 排序：最新 ⇄ 名稱 -->
           <button id="sort-btn" onclick="toggleCategorySort()" class="bg-[#F6F6F6] text-[#7C3AED] px-4 py-3 rounded-xl font-extrabold text-sm flex items-center gap-1 shrink-0 active:scale-95 transition">
-            <span id="sort-label">最新排序</span> ⇅
+            <span id="sort-label">依最新排序</span> ⇅
           </button>
         </div>
 
@@ -88,7 +89,7 @@
             <datalist id="category-list"></datalist>
           </div>
 
-          <!-- 劃線重點 (190px 高度) -->
+          <!-- 劃線重點 -->
           <div>
             <div class="flex justify-between items-center mb-2">
               <label class="block text-sm font-extrabold text-gray-400 uppercase tracking-wider">劃線重點</label>
@@ -101,7 +102,7 @@
                 </button>
                 <input type="file" id="camera-input" accept="image/*" capture="environment" class="hidden" onchange="handleImageUpload(event)">
 
-                <button type="button" onclick="applyHighlight('quote')" title="劃黃色重點" class="w-7 h-7 bg-yellow-300 rounded-full shadow-sm active:scale-90 transition border border-yellow-400/30"></button>
+                <button type="button" onclick="toggleHighlight('quote')" title="開關黃色重點" class="w-7 h-7 bg-yellow-300 rounded-full shadow-sm active:scale-90 transition border border-yellow-400/30"></button>
                 <button type="button" onclick="startSpeech('quote')" title="語音輸入" class="p-2 rounded-full text-[#7C3AED] bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 active:scale-95 transition">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 003-3V6a3 3 0 00-6 0v6.75a3 3 0 003 3z"></path>
@@ -112,12 +113,12 @@
             <div id="quote" contenteditable="true" class="w-full min-h-[190px] bg-[#F6F6F6] text-[#111111] p-5 rounded-2xl focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-semibold leading-relaxed overflow-y-auto"></div>
           </div>
 
-          <!-- 個人心得 (120px 高度) -->
+          <!-- 個人心得 -->
           <div>
             <div class="flex justify-between items-center mb-2">
               <label class="block text-sm font-extrabold text-gray-400 uppercase tracking-wider">個人心得</label>
               <div class="flex items-center gap-3">
-                <button type="button" onclick="applyHighlight('thought')" title="劃黃色重點" class="w-7 h-7 bg-yellow-300 rounded-full shadow-sm active:scale-90 transition border border-yellow-400/30"></button>
+                <button type="button" onclick="toggleHighlight('thought')" title="開關黃色重點" class="w-7 h-7 bg-yellow-300 rounded-full shadow-sm active:scale-90 transition border border-yellow-400/30"></button>
                 <button type="button" onclick="startSpeech('thought')" title="語音輸入" class="p-2 rounded-full text-[#7C3AED] bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 active:scale-95 transition">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 003-3V6a3 3 0 00-6 0v6.75a3 3 0 003 3z"></path>
@@ -128,9 +129,10 @@
             <div id="thought" contenteditable="true" class="w-full min-h-[120px] bg-[#F6F6F6] text-[#111111] p-5 rounded-2xl focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-semibold leading-relaxed overflow-y-auto"></div>
           </div>
 
+          <!-- 表單操作區：採用鮮明紫漸層與 Bottom bar 區隔 -->
           <div class="space-y-3 pt-2">
-            <button type="submit" id="submit-btn" class="w-full bg-[#111111] text-white font-extrabold py-4 rounded-full text-base shadow-md active:scale-98 transition-transform">儲存重點</button>
-            <button type="button" id="delete-btn" onclick="handleFormDelete()" class="hidden w-full bg-[#F6F6F6] text-gray-700 font-extrabold py-4 rounded-full text-base active:scale-98 transition-transform">刪除重點</button>
+            <button type="submit" id="submit-btn" class="w-full bg-gradient-to-r from-[#8B5CF6] to-[#7C3AED] text-white font-black py-4 rounded-2xl text-base shadow-lg shadow-purple-200 active:scale-98 transition-all">儲存重點</button>
+            <button type="button" id="delete-btn" onclick="handleFormDelete()" class="hidden w-full bg-[#F6F6F6] text-gray-500 font-bold py-3.5 rounded-2xl text-sm active:scale-98 transition">刪除重點</button>
           </div>
         </form>
       </div>
@@ -165,8 +167,6 @@
 
     <div class="relative flex-1 w-full flex items-center justify-center overflow-hidden canvas-container">
       <canvas id="doodle-canvas" class="max-w-full max-h-full rounded-xl shadow-lg border border-white/20"></canvas>
-      <!-- 畫線軌跡層，避免半透明塗鴉重複疊加變成實心 -->
-      <canvas id="draw-layer" class="absolute inset-0 pointer-events-none max-w-full max-h-full"></canvas>
     </div>
 
     <div class="w-full max-w-md bg-white p-4 rounded-3xl space-y-3 mt-3">
@@ -191,7 +191,7 @@
     let activeBook = null;
     let activeCategory = null;
     let selectedCategoryFilter = 'ALL';
-    let categorySortMode = 'time'; // 'time' (最新) 或 'count' (筆數最多)
+    let categorySortMode = 'time'; // 'time' (最新) 或 'name' (依主題名稱)
 
     let loadedImage = null;
     const canvas = document.getElementById('doodle-canvas');
@@ -199,7 +199,6 @@
     let isDrawing = false;
     let scaleRatio = 1;
 
-    // 用於記錄塗黃區域的最小與最大座標範圍（區域裁切）
     let maskMinX = Infinity, maskMinY = Infinity, maskMaxX = -Infinity, maskMaxY = -Infinity;
 
     function initAppStateFromHash() {
@@ -364,10 +363,10 @@
       renderCategoriesView();
     }
 
-    // 切換主題排序（最新建立 ⇄ 重點筆數最多）
+    // 主題排序模式：依最新 ⇄ 依主題名稱
     function toggleCategorySort() {
-      categorySortMode = categorySortMode === 'time' ? 'count' : 'time';
-      document.getElementById('sort-label').innerText = categorySortMode === 'time' ? '最新排序' : '最多筆數';
+      categorySortMode = categorySortMode === 'time' ? 'name' : 'time';
+      document.getElementById('sort-label').innerText = categorySortMode === 'time' ? '依最新排序' : '依名稱排序';
       renderCategoriesView();
     }
 
@@ -389,11 +388,9 @@
         return;
       }
 
-      // 依排序模式調整順序
-      if (categorySortMode === 'count') {
-        categories.sort((a, b) => catMap[b].length - catMap[a].length);
+      if (categorySortMode === 'name') {
+        categories.sort((a, b) => a.localeCompare(b, 'zh-Hant'));
       } else {
-        // 預設依最新發布時間排序
         categories.sort((a, b) => {
           const timeA = new Date(catMap[a][0].created_at).getTime();
           const timeB = new Date(catMap[b][0].created_at).getTime();
@@ -407,7 +404,6 @@
           <div class="space-y-3">
             <div class="flex justify-between items-baseline px-1">
               <h2 class="text-2xl font-black tracking-tight text-[#111111]">${cat}</h2>
-              <span class="text-xs font-black text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full">${notes.length} 筆</span>
             </div>
             <div class="space-y-3">
               ${notes.map(note => renderPreviewCard(note)).join('')}
@@ -429,7 +425,6 @@
       container.innerHTML = notes.map(note => renderFullCard(note)).join('');
     }
 
-    // 列表頁卡片：心得改為淺紫色背景（bg-[#F3E8FF] / text-[#6B21A8]）
     function renderPreviewCard(note) {
       return `
         <div onclick="editNote(${note.id})" class="bg-[#F6F6F6] p-5 rounded-2xl cursor-pointer active:scale-98 transition relative space-y-3">
@@ -464,7 +459,6 @@
       document.getElementById('delete-btn').classList.add('hidden');
     }
 
-    // 點擊卡片跳轉編輯頁，並滾動到頂部
     function editNote(id) {
       const note = allNotes.find(n => n.id === id);
       if (!note) return;
@@ -477,15 +471,16 @@
       document.getElementById('submit-btn').innerText = "儲存重點";
       document.getElementById('delete-btn').classList.remove('hidden');
       switchTab('add');
-      scrollToTop(); // 置頂
+      scrollToTop();
     }
 
-    function applyHighlight(targetId) {
+    // 支援「重新選取再按一次取消劃線」 (Toggle Highlight)
+    function toggleHighlight(targetId) {
       const editor = document.getElementById(targetId);
       const sel = window.getSelection();
 
       if (!sel.rangeCount || sel.isCollapsed) {
-        alert("請先選取要劃重點的文字！");
+        alert("請先選取要劃線或取消重點的文字！");
         return;
       }
 
@@ -495,13 +490,31 @@
         return;
       }
 
-      const span = document.createElement('mark');
-      span.className = 'bg-yellow-200 px-1 rounded text-[#111111]';
-      
-      try {
-        range.surroundContents(span);
-      } catch (e) {
-        document.execCommand('hiliteColor', false, '#FEF08A');
+      // 檢查選取範圍內是否已經有 <mark> 標籤
+      let parentNode = sel.anchorNode.parentNode;
+      let markNode = null;
+
+      while (parentNode && parentNode !== editor) {
+        if (parentNode.tagName === 'MARK') {
+          markNode = parentNode;
+          break;
+        }
+        parentNode = parentNode.parentNode;
+      }
+
+      if (markNode) {
+        // 解除重點：用純文字替換掉 mark 標籤
+        const textNode = document.createTextNode(markNode.textContent);
+        markNode.parentNode.replaceChild(textNode, markNode);
+      } else {
+        // 加上黃色重點
+        const span = document.createElement('mark');
+        span.className = 'bg-yellow-200 px-1 rounded text-[#111111]';
+        try {
+          range.surroundContents(span);
+        } catch (e) {
+          document.execCommand('hiliteColor', false, '#FEF08A');
+        }
       }
 
       sel.removeAllRanges();
@@ -520,7 +533,7 @@
       recognition.start();
     }
 
-    // --- 高精準度與快速度：塗畫區域自動裁切 OCR 技術 ---
+    // --- 相片辨識 OCR 與灰階二值化處理 ---
 
     function triggerCamera() {
       document.getElementById('camera-input').click();
@@ -609,7 +622,7 @@
       const size = document.getElementById('brush-size').value * scaleRatio;
 
       ctx.lineTo(pos.x, pos.y);
-      ctx.strokeStyle = 'rgba(254, 240, 138, 0.55)'; // 半透明螢光黃
+      ctx.strokeStyle = 'rgba(254, 240, 138, 0.55)';
       ctx.lineWidth = size;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
@@ -629,7 +642,23 @@
       if (y + radius > maskMaxY) maskMaxY = Math.min(canvas.height, y + radius);
     }
 
-    // 裁切塗黃線的重點區域，大幅減小圖像尺寸，讓辨識極快且精準
+    // 圖片預處理：提升 OCR 正確率
+    function preprocessCanvas(cropCtx, width, height) {
+      const imgData = cropCtx.getImageData(0, 0, width, height);
+      const data = imgData.data;
+
+      // 灰階化與提升對比
+      for (let i = 0; i < data.length; i += 4) {
+        let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        // 高對比強化（黑白更分明）
+        avg = avg < 140 ? 0 : 255;
+        data[i] = avg;
+        data[i + 1] = avg;
+        data[i + 2] = avg;
+      }
+      cropCtx.putImageData(imgData, 0, 0);
+    }
+
     function getCroppedCanvasData() {
       if (maskMinX === Infinity) return canvas.toDataURL();
 
@@ -641,15 +670,15 @@
       cropCanvas.height = height;
       const cropCtx = cropCanvas.getContext('2d');
 
-      // 從原照片對應座標裁切
       cropCtx.drawImage(loadedImage, maskMinX, maskMinY, width, height, 0, 0, width, height);
+      preprocessCanvas(cropCtx, width, height);
 
       return cropCanvas.toDataURL('image/png');
     }
 
     async function processDoodleCropOCR() {
       const btn = document.getElementById('ocr-btn');
-      btn.innerText = '快速辨識文字中...';
+      btn.innerText = '辨識文字中...';
       btn.disabled = true;
 
       try {
@@ -660,15 +689,16 @@
           'chi_tra'
         );
 
-        const cleanText = text.replace(/\s+/g, ' ').trim();
+        // 清理無效空白與換行符號
+        const cleanText = text.replace(/\s+/g, '').trim();
 
         if (cleanText) {
           const editor = document.getElementById('quote');
-          const highlightedHtml = `<mark class="bg-yellow-200 px-1 rounded text-[#111111]">${cleanText}</mark>`;
-          editor.innerHTML = editor.innerHTML ? editor.innerHTML + '<br>' + highlightedHtml : highlightedHtml;
+          // 辨識結果直接插入為一般文字，不再反黃
+          editor.innerHTML = editor.innerHTML ? editor.innerHTML + '<br>' + cleanText : cleanText;
           closeDoodleModal();
         } else {
-          alert('沒有辨識到清楚的文字，請確保劃線範圍涵蓋文字再試一次！');
+          alert('未能清楚辨識，請確保劃線涵蓋文字、並儘量保持相片平整清晰！');
         }
       } catch (err) {
         console.error(err);
