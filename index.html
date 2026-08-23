@@ -146,15 +146,15 @@
     <!-- 固定 Bottom Bar -->
     <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-md bg-[#111111] text-white rounded-full z-40 px-6 py-1.5 shadow-2xl">
       <div class="flex justify-between items-center h-10">
-        <button onclick="switchTab('books')" id="nav-books" class="flex-1 flex items-center justify-center text-center font-medium text-sm text-gray-400 transition-opacity">
+        <button type="button" onclick="switchTab('books')" id="nav-books" class="flex-1 flex items-center justify-center text-center font-medium text-sm text-gray-400 transition-opacity">
           書庫
         </button>
 
-        <button onclick="openAddNew()" id="nav-add" class="w-16 h-16 bg-[#7C3AED] text-[#FFFFFF] rounded-full flex items-center justify-center font-normal text-4xl shrink-0 shadow-xl active:scale-90 transition-transform -my-4 z-50">
+        <button type="button" onclick="openAddNew()" id="nav-add" class="w-16 h-16 bg-[#7C3AED] text-[#FFFFFF] rounded-full flex items-center justify-center font-normal text-4xl shrink-0 shadow-xl active:scale-90 transition-transform -my-4 z-50">
           +
         </button>
 
-        <button onclick="switchTab('categories')" id="nav-categories" class="flex-1 flex items-center justify-center text-center font-medium text-sm text-gray-400 transition-opacity">
+        <button type="button" onclick="switchTab('categories')" id="nav-categories" class="flex-1 flex items-center justify-center text-center font-medium text-sm text-gray-400 transition-opacity">
           主題
         </button>
       </div>
@@ -274,6 +274,7 @@
 
     function switchTab(tab) {
       currentTab = tab;
+      // 重點修復：點擊底部導覽欄時強制清空當前選擇的「特定書籍/主題」，確保返回總表頁面
       activeBook = null;
       activeCategory = null;
       updateHash();
@@ -478,7 +479,6 @@
       document.getElementById('delete-btn').classList.add('hidden');
     }
 
-    // 關鍵核心修復：阻止冒泡與狀態歸零
     function editNote(e, id) {
       if (e) e.stopPropagation();
 
@@ -488,21 +488,15 @@
         return;
       }
 
-      // 1. 強制重置選取的分類與書籍狀態，防止 View 判定誤判
-      activeBook = null;
-      activeCategory = null;
-      currentTab = 'add';
-      updateHash();
-
-      // 2. 寫入欄位
       document.getElementById('note-id').value = note.id;
       document.getElementById('book_title').value = note.book_title || '';
       document.getElementById('category').value = note.category || '';
 
-      // 3. 渲染編輯頁 DOM
+      currentTab = 'add';
+      updateHash();
+
       renderCurrentView();
 
-      // 4. 寫入內文
       const quoteEl = document.getElementById('quote');
       const thoughtEl = document.getElementById('thought');
 
