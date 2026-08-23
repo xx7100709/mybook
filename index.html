@@ -788,8 +788,15 @@
       let error;
       if (noteId) {
         // 更新資料庫中既有的重點
-        const res = await supabaseClient.from('book_notes').update(payload).eq('id', noteId);
+        // 加上 .select()，這樣才能知道「有沒有真的更新到資料」。
+        // 若 Supabase 的 RLS 沒開放 UPDATE 權限，update() 常常不會回傳 error，
+        // 但實際上是 0 筆資料被改到，畫面卻顯示「儲存成功」，造成「編輯完儲存但沒有修改」的情況。
+        const res = await supabaseClient.from('book_notes').update(payload).eq('id', noteId).select();
         error = res.error;
+
+        if (!error && (!res.data || res.data.length === 0)) {
+          error = { message: '沒有任何資料被更新。可能原因：\n1) Supabase 資料表尚未開放 UPDATE 的 RLS 權限\n2) 該筆重點的 id 不存在\n請至 Supabase 後台檢查 book_notes 資料表的 Row Level Security 政策。' };
+        }
       } else {
         // 新增重點
         const res = await supabaseClient.from('book_notes').insert([payload]);
