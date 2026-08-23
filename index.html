@@ -308,8 +308,6 @@
     function renderCurrentView() {
       const title = document.getElementById('page-title');
       const backBtn = document.getElementById('back-btn');
-      const navBooks = document.getElementById('nav-books');
-      const navCat = document.getElementById('nav-[#7C3AED]');
 
       const views = ['view-books', 'view-book-detail', 'view-categories', 'view-category-detail', 'view-add'];
       views.forEach(v => document.getElementById(v).classList.add('hidden'));
@@ -447,12 +445,12 @@
     function renderPreviewCard(note) {
       const showThought = hasValidContent(note.thought);
       return `
-        <div onclick="editNote('${note.id}')" class="bg-[#F6F6F6] p-5 rounded-2xl cursor-pointer active:scale-98 transition relative space-y-3">
-          <div class="flex justify-between items-center">
+        <div onclick="editNote(event, '${note.id}')" class="bg-[#F6F6F6] p-5 rounded-2xl cursor-pointer active:scale-98 transition relative space-y-3">
+          <div class="flex justify-between items-center pointer-events-none">
             <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">${note.book_title}</p>
           </div>
-          <div class="text-base font-normal text-[#111111] leading-relaxed pl-1">${note.quote}</div>
-          ${showThought ? `<div class="text-sm font-normal bg-[#F3E8FF] text-[#6B21A8] p-3.5 rounded-xl leading-relaxed">${note.thought}</div>` : ''}
+          <div class="text-base font-normal text-[#111111] leading-relaxed pl-1 pointer-events-none">${note.quote}</div>
+          ${showThought ? `<div class="text-sm font-normal bg-[#F3E8FF] text-[#6B21A8] p-3.5 rounded-xl leading-relaxed pointer-events-none">${note.thought}</div>` : ''}
         </div>
       `;
     }
@@ -460,12 +458,12 @@
     function renderFullCard(note) {
       const showThought = hasValidContent(note.thought);
       return `
-        <div onclick="editNote('${note.id}')" class="bg-[#F6F6F6] p-5 rounded-2xl space-y-3 cursor-pointer active:scale-98 transition relative">
-          <div class="flex justify-between items-center">
+        <div onclick="editNote(event, '${note.id}')" class="bg-[#F6F6F6] p-5 rounded-2xl space-y-3 cursor-pointer active:scale-98 transition relative">
+          <div class="flex justify-between items-center pointer-events-none">
             <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">${note.category || '未分類'}</p>
           </div>
-          <div class="text-base font-normal text-[#111111] leading-relaxed pl-1">${note.quote}</div>
-          ${showThought ? `<div class="text-sm font-normal bg-[#F3E8FF] text-[#6B21A8] p-3.5 rounded-xl leading-relaxed">${note.thought}</div>` : ''}
+          <div class="text-base font-normal text-[#111111] leading-relaxed pl-1 pointer-events-none">${note.quote}</div>
+          ${showThought ? `<div class="text-sm font-normal bg-[#F3E8FF] text-[#6B21A8] p-3.5 rounded-xl leading-relaxed pointer-events-none">${note.thought}</div>` : ''}
         </div>
       `;
     }
@@ -480,32 +478,41 @@
       document.getElementById('delete-btn').classList.add('hidden');
     }
 
-    // 重點修復：點擊卡片帶入編輯頁與延遲載入 DOM
-    function editNote(id) {
+    // 關鍵核心修復：阻止冒泡與狀態歸零
+    function editNote(e, id) {
+      if (e) e.stopPropagation();
+
       const note = allNotes.find(n => String(n.id) === String(id));
       if (!note) {
         alert("找不到該筆重點！");
         return;
       }
 
+      // 1. 強制重置選取的分類與書籍狀態，防止 View 判定誤判
+      activeBook = null;
+      activeCategory = null;
+      currentTab = 'add';
+      updateHash();
+
+      // 2. 寫入欄位
       document.getElementById('note-id').value = note.id;
       document.getElementById('book_title').value = note.book_title || '';
       document.getElementById('category').value = note.category || '';
 
-      switchTab('add');
+      // 3. 渲染編輯頁 DOM
+      renderCurrentView();
 
-      setTimeout(() => {
-        const quoteEl = document.getElementById('quote');
-        const thoughtEl = document.getElementById('thought');
+      // 4. 寫入內文
+      const quoteEl = document.getElementById('quote');
+      const thoughtEl = document.getElementById('thought');
 
-        if (quoteEl) quoteEl.innerHTML = note.quote || '';
-        if (thoughtEl) thoughtEl.innerHTML = note.thought || '';
+      if (quoteEl) quoteEl.innerHTML = note.quote || '';
+      if (thoughtEl) thoughtEl.innerHTML = note.thought || '';
 
-        document.getElementById('submit-btn').innerText = "儲存重點";
-        document.getElementById('delete-btn').classList.remove('hidden');
-        
-        scrollToTop();
-      }, 50);
+      document.getElementById('submit-btn').innerText = "儲存重點";
+      document.getElementById('delete-btn').classList.remove('hidden');
+      
+      scrollToTop();
     }
 
     function preventFocusLoss(e) {
