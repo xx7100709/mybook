@@ -1,79 +1,790 @@
-// 輔助函式：清理 contenteditable 殘留的隱形標籤與空白
-function cleanHtmlContent(html) {
-  if (!html) return '';
-  // 移除所有 HTML 標籤與全半形空白
-  const plainText = html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim();
-  // 如果裡面根本沒有實際文字，直接回傳空字串
-  return plainText === '' ? '' : html.trim();
-}
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>讀書重點</title>
+  <meta name="theme-color" content="#FFFFFF">
+  <link rel="manifest" href="./manifest.json">
+  
+  <link rel="icon" type="image/png" href="./icon.png?v=2">
+  <link rel="shortcut icon" type="image/png" href="./icon.png?v=2">
+  <link rel="apple-touch-icon" href="./icon.png?v=2">
 
-// 1. 修改卡片渲染邏輯
-function renderPreviewCard(note) {
-  const cleanThought = cleanHtmlContent(note.thought);
-  return `
-    <div onclick="editNote(${note.id})" class="bg-[#F6F6F6] p-5 rounded-2xl cursor-pointer active:scale-98 transition relative space-y-3">
-      <div class="flex justify-between items-center">
-        <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">${note.book_title}</p>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #FFFFFF; color: #111111; }
+    .pb-safe { padding-bottom: calc(7rem + env(safe-area-inset-bottom)); }
+    .canvas-container { touch-action: none; }
+  </style>
+</head>
+<body class="min-h-screen pb-safe select-none bg-[#FFFFFF] flex flex-col items-center font-normal">
+
+  <div class="w-full max-w-md min-h-screen relative flex flex-col bg-white">
+
+    <!-- Header -->
+    <header class="sticky top-0 bg-white/95 backdrop-blur-md z-10 px-6 pt-8 pb-4 flex justify-between items-center border-b border-gray-100">
+      <div class="flex items-center gap-3">
+        <button id="back-btn" onclick="goBack()" class="hidden text-2xl font-medium text-[#111111] active:opacity-60">←</button>
+        <h1 id="page-title" class="text-2xl font-medium tracking-tight text-[#111111]">新增重點</h1>
       </div>
-      <div class="text-base font-normal text-[#111111] leading-relaxed pl-1">${note.quote}</div>
-      ${cleanThought ? `<div class="text-sm font-normal bg-[#F3E8FF] text-[#6B21A8] p-3.5 rounded-xl leading-relaxed">${cleanThought}</div>` : ''}
-    </div>
-  `;
-}
+      <div class="w-3 h-3 rounded-full bg-[#7C3AED]"></div>
+    </header>
 
-function renderFullCard(note) {
-  const cleanThought = cleanHtmlContent(note.thought);
-  return `
-    <div onclick="editNote(${note.id})" class="bg-[#F6F6F6] p-5 rounded-2xl space-y-3 cursor-pointer active:scale-98 transition relative">
-      <div class="flex justify-between items-center">
-        <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">${note.category || '未分類'}</p>
+    <main class="flex-1 px-6 pt-5">
+      
+      <!-- 頁面 1: 書庫列表 -->
+      <div id="view-books" class="hidden space-y-4">
+        <div id="books-list" class="space-y-4">
+          <p class="text-center text-gray-400 py-12 font-medium text-base">載入中...</p>
+        </div>
       </div>
-      <div class="text-base font-normal text-[#111111] leading-relaxed pl-1">${note.quote}</div>
-      ${cleanThought ? `<div class="text-sm font-normal bg-[#F3E8FF] text-[#6B21A8] p-3.5 rounded-xl leading-relaxed">${cleanThought}</div>` : ''}
+
+      <!-- 頁面 1-1: 獨立書籍重點頁面 -->
+      <div id="view-book-detail" class="hidden space-y-4">
+        <div id="book-detail-list" class="space-y-4"></div>
+      </div>
+
+      <!-- 頁面 2: 主題列表 -->
+      <div id="view-categories" class="hidden space-y-4">
+        <div class="flex gap-2 items-center">
+          <select id="category-filter" onchange="filterCategory(this.value)" class="flex-1 bg-[#F6F6F6] text-[#111111] px-4 py-3 rounded-xl font-medium border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none">
+            <option value="ALL">全部主題</option>
+          </select>
+
+          <button id="sort-btn" onclick="toggleCategorySort()" class="bg-[#F6F6F6] text-[#7C3AED] px-4 py-3 rounded-xl font-medium text-sm flex items-center gap-1 shrink-0 active:scale-95 transition">
+            <span id="sort-label">依最新排序</span> ⇅
+          </button>
+        </div>
+
+        <div id="categories-list" class="space-y-6 pt-2">
+          <p class="text-center text-gray-400 py-12 font-medium text-base">載入中...</p>
+        </div>
+      </div>
+
+      <!-- 頁面 2-1: 獨立主題重點頁面 -->
+      <div id="view-category-detail" class="hidden space-y-4">
+        <div id="category-detail-list" class="space-y-4"></div>
+      </div>
+
+      <!-- 頁面 3: 新增/編輯頁面 -->
+      <div id="view-add" class="space-y-6 pb-8">
+        <form id="note-form" class="space-y-6">
+          <input type="hidden" id="note-id">
+
+          <div>
+            <label class="block text-sm font-medium text-gray-400 uppercase tracking-wider mb-2">書名</label>
+            <input type="text" id="book_title" list="book-list" required class="w-full bg-[#F6F6F6] text-[#111111] px-5 py-4 rounded-2xl border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-lg font-medium leading-snug">
+            <datalist id="book-list"></datalist>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-400 uppercase tracking-wider mb-2">主題分類</label>
+            <input type="text" id="category" list="category-list" required class="w-full bg-[#F6F6F6] text-[#111111] px-5 py-4 rounded-2xl border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-lg font-medium leading-snug">
+            <datalist id="category-list"></datalist>
+          </div>
+
+          <!-- 劃線重點 -->
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <label class="block text-sm font-medium text-gray-400 uppercase tracking-wider">劃線重點</label>
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="triggerCamera()" title="拍照劃線辨識" class="p-2 rounded-full text-[#7C3AED] bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 active:scale-95 transition flex items-center gap-1">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574v9.176A2.25 2.25 0 004.5 21h15a2.25 2.25 0 002.25-2.25V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"></path>
+                  </svg>
+                </button>
+                <input type="file" id="camera-input" accept="image/*" capture="environment" class="hidden" onchange="handleImageUpload(event)">
+
+                <button type="button" onclick="startSpeech('quote')" title="語音輸入" class="p-2 rounded-full text-[#7C3AED] bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 active:scale-95 transition">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 003-3V6a3 3 0 00-6 0v6.75a3 3 0 003 3z"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="relative w-full">
+              <div id="quote" contenteditable="true" class="w-full min-h-[190px] bg-[#F6F6F6] text-[#111111] p-5 pb-12 rounded-2xl focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-normal leading-relaxed overflow-y-auto"></div>
+              <button type="button" onmousedown="preventFocusLoss(event)" onclick="toggleHighlight('quote')" title="劃黃重點/取消" class="absolute right-3 bottom-3 w-8 h-8 bg-yellow-300 rounded-full active:scale-90 transition flex items-center justify-center z-10"></button>
+            </div>
+          </div>
+
+          <!-- 個人心得 -->
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <label class="block text-sm font-medium text-gray-400 uppercase tracking-wider">個人心得</label>
+              <div class="flex items-center gap-3">
+                <button type="button" onclick="startSpeech('thought')" title="語音輸入" class="p-2 rounded-full text-[#7C3AED] bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 active:scale-95 transition">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 003-3V6a3 3 0 00-6 0v6.75a3 3 0 003 3z"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="relative w-full">
+              <div id="thought" contenteditable="true" class="w-full min-h-[120px] bg-[#F6F6F6] text-[#111111] p-5 pb-12 rounded-2xl focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-normal leading-relaxed overflow-y-auto"></div>
+              <button type="button" onmousedown="preventFocusLoss(event)" onclick="toggleHighlight('thought')" title="劃黃重點/取消" class="absolute right-3 bottom-3 w-8 h-8 bg-yellow-300 rounded-full active:scale-90 transition flex items-center justify-center z-10"></button>
+            </div>
+          </div>
+
+          <!-- 操作按鈕 -->
+          <div class="flex items-center gap-3 pt-2">
+            <button type="button" id="delete-btn" onclick="handleFormDelete()" class="hidden flex-1 bg-gray-200 text-white font-medium py-4 rounded-full text-base active:scale-95 transition-transform">刪除重點</button>
+            <button type="submit" id="submit-btn" class="flex-1 bg-gradient-to-r from-[#8B5CF6] to-[#7C3AED] text-white font-medium py-4 rounded-full text-base shadow-lg shadow-purple-200 active:scale-95 transition-transform">儲存重點</button>
+          </div>
+        </form>
+      </div>
+
+    </main>
+
+    <!-- 固定 Bottom Bar -->
+    <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-md bg-[#111111] text-white rounded-full z-40 px-6 py-1.5 shadow-2xl">
+      <div class="flex justify-between items-center h-10">
+        <button onclick="switchTab('books')" id="nav-books" class="flex-1 flex items-center justify-center text-center font-medium text-sm text-gray-400 transition-opacity">
+          書庫
+        </button>
+
+        <button onclick="openAddNew()" id="nav-add" class="w-16 h-16 bg-[#7C3AED] text-white rounded-full flex items-center justify-center font-normal text-4xl shrink-0 shadow-xl active:scale-90 transition-transform -my-4 z-50">
+          +
+        </button>
+
+        <button onclick="switchTab('categories')" id="nav-categories" class="flex-1 flex items-center justify-center text-center font-medium text-sm text-gray-400 transition-opacity">
+          主題
+        </button>
+      </div>
+    </nav>
+
+  </div>
+
+  <!-- 塗鴉 Modal -->
+  <div id="doodle-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex flex-col items-center justify-between p-4 backdrop-blur-sm">
+    <div class="w-full flex justify-between items-center text-white py-2">
+      <h3 class="text-lg font-medium">塗黃線選取要辨識的文字</h3>
+      <button onclick="closeDoodleModal()" class="text-gray-300 font-medium px-2 py-1">關閉</button>
     </div>
-  `;
-}
 
-// 2. 修改表單儲存邏輯 (note-form submit)
-document.getElementById('note-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
+    <div class="relative flex-1 w-full flex items-center justify-center overflow-hidden canvas-container">
+      <canvas id="doodle-canvas" class="max-w-full max-h-full rounded-xl shadow-lg border border-white/20"></canvas>
+    </div>
 
-  const rawQuote = document.getElementById('quote').innerHTML;
-  const rawThought = document.getElementById('thought').innerHTML;
+    <div class="w-full max-w-md bg-white p-4 rounded-3xl space-y-3 mt-3">
+      <div class="flex items-center justify-between px-2">
+        <span class="text-xs font-medium text-gray-500 uppercase">筆刷粗細</span>
+        <input type="range" id="brush-size" min="5" max="60" value="25" class="w-1/2 accent-[#7C3AED]">
+        <button onclick="clearCanvasDoodle()" class="text-xs font-medium text-red-500 bg-red-50 px-3 py-1.5 rounded-full">重畫</button>
+      </div>
+      <button id="ocr-btn" onclick="processDoodleCropOCR()" class="w-full bg-[#7C3AED] text-white font-medium py-3.5 rounded-full text-base shadow-md active:scale-95 transition">
+        辨識塗黃區域文字
+      </button>
+    </div>
+  </div>
 
-  const quoteHtml = cleanHtmlContent(rawQuote);
-  const thoughtHtml = cleanHtmlContent(rawThought);
+  <script>
+    const SUPABASE_URL = 'https://uumglpeoqmkplcnccfrq.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_63y7i9dorGmGi34pP6rCRQ_5xuUo1r_';
+    const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
-  if (!quoteHtml) {
-    alert("請輸入劃線重點！");
-    return;
-  }
+    let allNotes = [];
+    let currentTab = 'add';
+    let activeBook = null;
+    let activeCategory = null;
+    let selectedCategoryFilter = 'ALL';
+    let categorySortMode = 'time';
 
-  const btn = document.getElementById('submit-btn');
-  btn.innerText = '儲存中...'; btn.disabled = true;
+    let loadedImage = null;
+    const canvas = document.getElementById('doodle-canvas');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let scaleRatio = 1;
 
-  const noteId = document.getElementById('note-id').value;
-  const payload = {
-    book_title: document.getElementById('book_title').value,
-    category: document.getElementById('category').value || '未分類',
-    quote: quoteHtml,
-    thought: thoughtHtml // 如果被清空了，這裡會是長度為 0 的空字串
-  };
+    let maskMinX = Infinity, maskMinY = Infinity, maskMaxX = -Infinity, maskMaxY = -Infinity;
 
-  let error;
-  if (noteId) {
-    const res = await supabaseClient.from('book_notes').update(payload).eq('id', noteId);
-    error = res.error;
-  } else {
-    const res = await supabaseClient.from('book_notes').insert([payload]);
-    error = res.error;
-  }
+    // 清理 contenteditable 殘留隱藏標籤與空白
+    function cleanHtmlContent(html) {
+      if (!html) return '';
+      const plainText = html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim();
+      return plainText === '' ? '' : html.trim();
+    }
 
-  btn.disabled = false;
-  if (error) {
-    alert('儲存失敗：' + error.message);
-  } else { 
-    await fetchNotes();
-    switchTab('categories');
-  }
-});
+    function initAppStateFromHash() {
+      const hash = location.hash.replace('#', '');
+      if (hash) {
+        const parts = hash.split('/');
+        currentTab = parts[0] || 'add';
+        if (parts[0] === 'book' && parts[1]) activeBook = decodeURIComponent(parts[1]);
+        if (parts[0] === 'category' && parts[1]) activeCategory = decodeURIComponent(parts[1]);
+      } else {
+        currentTab = 'add';
+      }
+    }
+
+    function updateHash() {
+      if (activeBook) {
+        location.hash = `book/${encodeURIComponent(activeBook)}`;
+      } else if (activeCategory) {
+        location.hash = `category/${encodeURIComponent(activeCategory)}`;
+      } else {
+        location.hash = currentTab;
+      }
+    }
+
+    window.addEventListener('popstate', () => {
+      initAppStateFromHash();
+      renderCurrentView();
+    });
+
+    async function fetchNotes() {
+      if (!supabaseClient) return;
+      const { data, error } = await supabaseClient.from('book_notes').select('*').order('created_at', { ascending: false });
+      if (error) {
+        console.error(error);
+        return;
+      }
+      allNotes = data || [];
+      updateDatalists();
+      updateCategoryDropdown();
+      renderCurrentView();
+    }
+
+    function updateDatalists() {
+      const books = [...new Set(allNotes.map(n => n.book_title).filter(Boolean))];
+      const categories = [...new Set(allNotes.map(n => n.category).filter(Boolean))];
+      document.getElementById('book-list').innerHTML = books.map(b => `<option value="${b}">`).join('');
+      document.getElementById('category-list').innerHTML = categories.map(c => `<option value="${c}">`).join('');
+    }
+
+    function updateCategoryDropdown() {
+      const select = document.getElementById('category-filter');
+      const categories = [...new Set(allNotes.map(n => n.category || '未分類'))];
+      select.innerHTML = `<option value="ALL">全部主題</option>` + categories.map(c => `<option value="${c}">${c}</option>`).join('');
+      select.value = selectedCategoryFilter;
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      activeBook = null;
+      activeCategory = null;
+      updateHash();
+      renderCurrentView();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function openAddNew(defaultBookTitle = '') {
+      resetForm();
+      if (defaultBookTitle) {
+        document.getElementById('book_title').value = defaultBookTitle;
+      }
+      switchTab('add');
+    }
+
+    function goBack() {
+      if (activeBook) {
+        activeBook = null;
+        switchTab('books');
+      } else if (activeCategory) {
+        activeCategory = null;
+        switchTab('categories');
+      } else {
+        switchTab('add');
+      }
+    }
+
+    function scrollToTop() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderCurrentView() {
+      const title = document.getElementById('page-title');
+      const backBtn = document.getElementById('back-btn');
+      const navBooks = document.getElementById('nav-books');
+      const navCat = document.getElementById('nav-categories');
+
+      const views = ['view-books', 'view-book-detail', 'view-categories', 'view-category-detail', 'view-add'];
+      views.forEach(v => document.getElementById(v).classList.add('hidden'));
+
+      navBooks.className = "flex-1 flex items-center justify-center text-center font-medium text-sm text-gray-400";
+      navCat.className = "flex-1 flex items-center justify-center text-center font-medium text-sm text-gray-400";
+      backBtn.classList.add('hidden');
+
+      if (activeBook) {
+        title.innerText = activeBook;
+        backBtn.classList.remove('hidden');
+        document.getElementById('view-book-detail').classList.remove('hidden');
+        renderBookDetailView();
+      } else if (activeCategory) {
+        title.innerText = activeCategory;
+        backBtn.classList.remove('hidden');
+        document.getElementById('view-category-detail').classList.remove('hidden');
+        renderCategoryDetailView();
+      } else if (currentTab === 'books') {
+        title.innerText = "Library";
+        navBooks.className = "flex-1 flex items-center justify-center text-center font-medium text-sm text-white";
+        document.getElementById('view-books').classList.remove('hidden');
+        renderBooksView();
+      } else if (currentTab === 'categories') {
+        title.innerText = "Topics";
+        navCat.className = "flex-1 flex items-center justify-center text-center font-medium text-sm text-white";
+        document.getElementById('view-categories').classList.remove('hidden');
+        renderCategoriesView();
+      } else if (currentTab === 'add') {
+        title.innerText = document.getElementById('note-id').value ? "編輯重點" : "新增重點";
+        document.getElementById('view-add').classList.remove('hidden');
+      }
+    }
+
+    function renderBooksView() {
+      const container = document.getElementById('books-list');
+      const bookNames = [...new Set(allNotes.map(n => n.book_title).filter(Boolean))];
+
+      if (bookNames.length === 0) {
+        container.innerHTML = `<p class="text-center text-gray-400 py-12 font-medium text-base">尚未新增任何書籍</p>`;
+        return;
+      }
+
+      container.innerHTML = bookNames.map(book => `
+        <div class="bg-[#F6F6F6] rounded-2xl p-5 flex justify-between items-center">
+          <h2 onclick="openBookDetail('${book}')" class="text-lg font-medium text-[#111111] flex-1 cursor-pointer">${book}</h2>
+          <div class="flex items-center gap-3">
+            <button onclick="openAddNew('${book}')" title="為這本書新增重點" class="w-8 h-8 rounded-full bg-[#7C3AED]/10 text-[#7C3AED] font-medium flex items-center justify-center text-lg active:scale-90 transition">+</button>
+            <span onclick="openBookDetail('${book}')" class="text-gray-400 font-medium text-lg cursor-pointer">→</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openBookDetail(book) {
+      activeBook = book;
+      updateHash();
+      renderCurrentView();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderBookDetailView() {
+      const container = document.getElementById('book-detail-list');
+      const notes = allNotes.filter(n => n.book_title === activeBook);
+      container.innerHTML = notes.map(note => renderFullCard(note)).join('');
+    }
+
+    function filterCategory(cat) {
+      selectedCategoryFilter = cat;
+      renderCategoriesView();
+    }
+
+    function toggleCategorySort() {
+      categorySortMode = categorySortMode === 'time' ? 'name' : 'time';
+      document.getElementById('sort-label').innerText = categorySortMode === 'time' ? '依最新排序' : '依名稱排序';
+      renderCategoriesView();
+    }
+
+    function renderCategoriesView() {
+      const container = document.getElementById('categories-list');
+      const catMap = {};
+
+      allNotes.forEach(n => {
+        const cat = n.category || '未分類';
+        if (selectedCategoryFilter !== 'ALL' && cat !== selectedCategoryFilter) return;
+        if (!catMap[cat]) catMap[cat] = [];
+        catMap[cat].push(n);
+      });
+
+      let categories = Object.keys(catMap);
+
+      if (categories.length === 0) {
+        container.innerHTML = `<p class="text-center text-gray-400 py-12 font-medium text-base">尚未新增任何主題</p>`;
+        return;
+      }
+
+      if (categorySortMode === 'name') {
+        categories.sort((a, b) => a.localeCompare(b, 'zh-Hant'));
+      } else {
+        categories.sort((a, b) => {
+          const timeA = new Date(catMap[a][0].created_at).getTime();
+          const timeB = new Date(catMap[b][0].created_at).getTime();
+          return timeB - timeA;
+        });
+      }
+
+      container.innerHTML = categories.map(cat => {
+        const notes = catMap[cat];
+        return `
+          <div class="space-y-3">
+            <div class="flex justify-between items-baseline px-1">
+              <h2 class="text-2xl font-medium tracking-tight text-[#111111]">${cat}</h2>
+            </div>
+            <div class="space-y-3">
+              ${notes.map(note => renderPreviewCard(note)).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openCategoryDetail(cat) {
+      activeCategory = cat;
+      updateHash();
+      renderCurrentView();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderCategoryDetailView() {
+      const container = document.getElementById('category-detail-list');
+      const notes = allNotes.filter(n => (n.category || '未分類') === activeCategory);
+      container.innerHTML = notes.map(note => renderFullCard(note)).join('');
+    }
+
+    function renderPreviewCard(note) {
+      const cleanThought = cleanHtmlContent(note.thought);
+      return `
+        <div onclick="editNote(${note.id})" class="bg-[#F6F6F6] p-5 rounded-2xl cursor-pointer active:scale-98 transition relative space-y-3">
+          <div class="flex justify-between items-center">
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">${note.book_title}</p>
+          </div>
+          <div class="text-base font-normal text-[#111111] leading-relaxed pl-1">${note.quote}</div>
+          ${cleanThought ? `<div class="text-sm font-normal bg-[#F3E8FF] text-[#6B21A8] p-3.5 rounded-xl leading-relaxed">${cleanThought}</div>` : ''}
+        </div>
+      `;
+    }
+
+    function renderFullCard(note) {
+      const cleanThought = cleanHtmlContent(note.thought);
+      return `
+        <div onclick="editNote(${note.id})" class="bg-[#F6F6F6] p-5 rounded-2xl space-y-3 cursor-pointer active:scale-98 transition relative">
+          <div class="flex justify-between items-center">
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">${note.category || '未分類'}</p>
+          </div>
+          <div class="text-base font-normal text-[#111111] leading-relaxed pl-1">${note.quote}</div>
+          ${cleanThought ? `<div class="text-sm font-normal bg-[#F3E8FF] text-[#6B21A8] p-3.5 rounded-xl leading-relaxed">${cleanThought}</div>` : ''}
+        </div>
+      `;
+    }
+
+    function resetForm() {
+      document.getElementById('note-id').value = '';
+      document.getElementById('book_title').value = '';
+      document.getElementById('category').value = '';
+      document.getElementById('quote').innerHTML = '';
+      document.getElementById('thought').innerHTML = '';
+      document.getElementById('submit-btn').innerText = "儲存重點";
+      document.getElementById('delete-btn').classList.add('hidden');
+    }
+
+    function editNote(id) {
+      const note = allNotes.find(n => n.id === id);
+      if (!note) return;
+      document.getElementById('note-id').value = note.id;
+      document.getElementById('book_title').value = note.book_title;
+      document.getElementById('category').value = note.category || '';
+      document.getElementById('quote').innerHTML = note.quote;
+      document.getElementById('thought').innerHTML = note.thought || '';
+
+      document.getElementById('submit-btn').innerText = "儲存重點";
+      document.getElementById('delete-btn').classList.remove('hidden');
+      switchTab('add');
+      scrollToTop();
+    }
+
+    function preventFocusLoss(e) {
+      e.preventDefault();
+    }
+
+    function toggleHighlight(targetId) {
+      const editor = document.getElementById(targetId);
+      const sel = window.getSelection();
+
+      if (!sel.rangeCount || sel.isCollapsed) {
+        alert("請先選取要劃線的文字");
+        return;
+      }
+
+      const range = sel.getRangeAt(0);
+      if (!editor.contains(range.commonAncestorContainer)) {
+        alert("請選取欄位內的文字");
+        return;
+      }
+
+      let parentNode = sel.anchorNode.parentNode;
+      let markNode = null;
+
+      while (parentNode && parentNode !== editor) {
+        if (parentNode.tagName === 'MARK') {
+          markNode = parentNode;
+          break;
+        }
+        parentNode = parentNode.parentNode;
+      }
+
+      if (markNode) {
+        const textNode = document.createTextNode(markNode.textContent);
+        markNode.parentNode.replaceChild(textNode, markNode);
+      } else {
+        const span = document.createElement('mark');
+        span.className = 'bg-yellow-200 px-1 rounded text-[#111111]';
+        try {
+          range.surroundContents(span);
+        } catch (e) {
+          document.execCommand('hiliteColor', false, '#FEF08A');
+        }
+      }
+
+      sel.removeAllRanges();
+    }
+
+    function startSpeech(targetId) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) return alert("您的設備不支援語音輸入");
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'zh-TW';
+      recognition.onresult = (e) => {
+        const editor = document.getElementById(targetId);
+        const text = e.results[0][0].transcript;
+        editor.innerHTML = editor.innerHTML ? editor.innerHTML + '<br>' + text : text;
+      };
+      recognition.start();
+    }
+
+    function triggerCamera() {
+      document.getElementById('camera-input').click();
+    }
+
+    function handleImageUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        loadedImage = new Image();
+        loadedImage.onload = () => {
+          openDoodleModal();
+        };
+        loadedImage.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function openDoodleModal() {
+      document.getElementById('doodle-modal').classList.remove('hidden');
+      setupCanvas();
+    }
+
+    function closeDoodleModal() {
+      document.getElementById('doodle-modal').classList.add('hidden');
+      document.getElementById('camera-input').value = '';
+    }
+
+    function resetMaskBounds() {
+      maskMinX = Infinity; maskMinY = Infinity; maskMaxX = -Infinity; maskMaxY = -Infinity;
+    }
+
+    function setupCanvas() {
+      canvas.width = loadedImage.width;
+      canvas.height = loadedImage.height;
+
+      ctx.drawImage(loadedImage, 0, 0, canvas.width, canvas.height);
+
+      const rect = canvas.getBoundingClientRect();
+      scaleRatio = canvas.width / rect.width;
+
+      resetMaskBounds();
+      initCanvasEvents();
+    }
+
+    function clearCanvasDoodle() {
+      ctx.drawImage(loadedImage, 0, 0, canvas.width, canvas.height);
+      resetMaskBounds();
+    }
+
+    function initCanvasEvents() {
+      canvas.onmousedown = startDrawing;
+      canvas.onmousemove = draw;
+      canvas.onmouseup = stopDrawing;
+
+      canvas.ontouchstart = (e) => startDrawing(e.touches[0]);
+      canvas.ontouchmove = (e) => {
+        e.preventDefault();
+        draw(e.touches[0]);
+      };
+      canvas.ontouchend = stopDrawing;
+    }
+
+    function getCanvasPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      scaleRatio = canvas.width / rect.width;
+      return {
+        x: (e.clientX - rect.left) * scaleRatio,
+        y: (e.clientY - rect.top) * scaleRatio
+      };
+    }
+
+    function startDrawing(e) {
+      isDrawing = true;
+      const pos = getCanvasPos(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+      updateMaskBounds(pos.x, pos.y);
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      const pos = getCanvasPos(e);
+      const size = document.getElementById('brush-size').value * scaleRatio;
+
+      ctx.lineTo(pos.x, pos.y);
+      ctx.strokeStyle = 'rgba(254, 240, 138, 0.55)';
+      ctx.lineWidth = size;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+
+      updateMaskBounds(pos.x, pos.y, size);
+    }
+
+    function stopDrawing() {
+      isDrawing = false;
+    }
+
+    function updateMaskBounds(x, y, radius = 20) {
+      if (x - radius < maskMinX) maskMinX = Math.max(0, x - radius);
+      if (y - radius < maskMinY) maskMinY = Math.max(0, y - radius);
+      if (x + radius > maskMaxX) maskMaxX = Math.min(canvas.width, x + radius);
+      if (y + radius > maskMaxY) maskMaxY = Math.min(canvas.height, y + radius);
+    }
+
+    function preprocessCanvas(cropCtx, width, height) {
+      const imgData = cropCtx.getImageData(0, 0, width, height);
+      const data = imgData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        avg = avg < 140 ? 0 : 255;
+        data[i] = avg;
+        data[i + 1] = avg;
+        data[i + 2] = avg;
+      }
+      cropCtx.putImageData(imgData, 0, 0);
+    }
+
+    function getCroppedCanvasData() {
+      if (maskMinX === Infinity) return canvas.toDataURL();
+
+      const width = maskMaxX - maskMinX;
+      const height = maskMaxY - maskMinY;
+
+      const cropCanvas = document.createElement('canvas');
+      cropCanvas.width = width;
+      cropCanvas.height = height;
+      const cropCtx = cropCanvas.getContext('2d');
+
+      cropCtx.drawImage(loadedImage, maskMinX, maskMinY, width, height, 0, 0, width, height);
+      preprocessCanvas(cropCtx, width, height);
+
+      return cropCanvas.toDataURL('image/png');
+    }
+
+    function convertToFullWidthPunctuation(str) {
+      return str
+        .replace(/,/g, '，')
+        .replace(/\./g, '。')
+        .replace(/\!/g, '！')
+        .replace(/\?/g, '？')
+        .replace(/\:/g, '：')
+        .replace(/\;/g, '；')
+        .replace(/\(/g, '（')
+        .replace(/\)/g, '）');
+    }
+
+    async function processDoodleCropOCR() {
+      const btn = document.getElementById('ocr-btn');
+      btn.innerText = '辨識文字中...';
+      btn.disabled = true;
+
+      try {
+        const croppedImage = getCroppedCanvasData();
+
+        const { data: { text } } = await Tesseract.recognize(
+          croppedImage,
+          'chi_tra'
+        );
+
+        let cleanText = text.replace(/\s+/g, '').trim();
+        cleanText = convertToFullWidthPunctuation(cleanText);
+
+        if (cleanText) {
+          const editor = document.getElementById('quote');
+          editor.innerHTML = editor.innerHTML ? editor.innerHTML + '<br>' + cleanText : cleanText;
+          closeDoodleModal();
+        } else {
+          alert('未能清楚辨識，請確保劃線涵蓋文字');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('辨識失敗，請檢查網路連線');
+      } finally {
+        btn.innerText = '辨識塗黃區域文字';
+        btn.disabled = false;
+      }
+    }
+
+    document.getElementById('note-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const quoteHtml = cleanHtmlContent(document.getElementById('quote').innerHTML);
+      const thoughtHtml = cleanHtmlContent(document.getElementById('thought').innerHTML);
+
+      if (!quoteHtml) {
+        alert("請輸入劃線重點！");
+        return;
+      }
+
+      const btn = document.getElementById('submit-btn');
+      btn.innerText = '儲存中...'; btn.disabled = true;
+
+      const noteId = document.getElementById('note-id').value;
+      const payload = {
+        book_title: document.getElementById('book_title').value,
+        category: document.getElementById('category').value || '未分類',
+        quote: quoteHtml,
+        thought: thoughtHtml
+      };
+
+      let error;
+      if (noteId) {
+        const res = await supabaseClient.from('book_notes').update(payload).eq('id', noteId);
+        error = res.error;
+      } else {
+        const res = await supabaseClient.from('book_notes').insert([payload]);
+        error = res.error;
+      }
+
+      btn.disabled = false;
+      if (error) {
+        alert('儲存失敗：' + error.message);
+      } else { 
+        await fetchNotes();
+        switchTab('categories');
+      }
+    });
+
+    async function handleFormDelete() {
+      const noteId = document.getElementById('note-id').value;
+      if (noteId && confirm('確定要刪除這條重點嗎？')) {
+        const { error } = await supabaseClient.from('book_notes').delete().eq('id', noteId);
+        if (!error) {
+          await fetchNotes();
+          switchTab('categories');
+        } else {
+          alert('刪除失敗：' + error.message);
+        }
+      }
+    }
+
+    initAppStateFromHash();
+    fetchNotes();
+  </script>
+</body>
+</html>
