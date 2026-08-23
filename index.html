@@ -274,7 +274,6 @@
 
     function switchTab(tab) {
       currentTab = tab;
-      // 重點修復：點擊底部導覽欄時強制清空當前選擇的「特定書籍/主題」，確保返回總表頁面
       activeBook = null;
       activeCategory = null;
       updateHash();
@@ -582,7 +581,7 @@
         loadedImage.onload = () => {
           openDoodleModal();
         };
-        loadedImage.src = event.target.result;
+        loadedImage.src = event.result;
       };
       reader.readAsDataURL(file);
     }
@@ -750,11 +749,24 @@
       }
     }
 
+    // 關鍵修復：編輯儲存事件
     document.getElementById('note-form').addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const quoteHtml = cleanHtmlContent(document.getElementById('quote').innerHTML);
-      const thoughtHtml = cleanHtmlContent(document.getElementById('thought').innerHTML);
+      // 1. 強制讓當前 Focus 的輸入框失焦，確保手機輸入法將內容實體化寫入 DOM
+      if (document.activeElement) {
+        document.activeElement.blur();
+      }
+
+      // 2. 實時從 DOM 讀取最新修改的內容
+      const quoteElem = document.getElementById('quote');
+      const thoughtElem = document.getElementById('thought');
+
+      const rawQuote = quoteElem ? quoteElem.innerHTML : '';
+      const rawThought = thoughtElem ? thoughtElem.innerHTML : '';
+
+      const quoteHtml = cleanHtmlContent(rawQuote);
+      const thoughtHtml = cleanHtmlContent(rawThought);
 
       if (!quoteHtml) {
         alert("請輸入劃線重點！");
@@ -775,9 +787,11 @@
 
       let error;
       if (noteId) {
+        // 更新資料庫中既有的重點
         const res = await supabaseClient.from('book_notes').update(payload).eq('id', noteId);
         error = res.error;
       } else {
+        // 新增重點
         const res = await supabaseClient.from('book_notes').insert([payload]);
         error = res.error;
       }
@@ -788,8 +802,13 @@
       if (error) {
         alert('儲存失敗：' + error.message);
       } else { 
+        // 3. 重置表單並強制從遠端 Supabase 重新拉取最新的資料陣列
         resetForm();
         await fetchNotes();
+
+        // 4. 清空狀態，確保切回「主題」列表時顯示的是最新更新後的卡片
+        activeBook = null;
+        activeCategory = null;
         switchTab('categories');
       }
     });
@@ -801,6 +820,8 @@
         if (!error) {
           resetForm();
           await fetchNotes();
+          activeBook = null;
+          activeCategory = null;
           switchTab('categories');
         } else {
           alert('刪除失敗：' + error.message);
