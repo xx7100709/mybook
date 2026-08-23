@@ -14,22 +14,22 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #FFFFFF; color: #111111; }
     .pb-safe { padding-bottom: calc(7rem + env(safe-area-inset-bottom)); }
     .canvas-container { touch-action: none; }
   </style>
 </head>
-<body class="min-h-screen pb-safe select-none bg-[#FFFFFF] flex flex-col items-center">
+<body class="min-h-screen pb-safe select-none bg-[#FFFFFF] flex flex-col items-center font-normal">
 
   <div class="w-full max-w-md min-h-screen relative flex flex-col bg-white">
 
     <!-- Header -->
     <header class="sticky top-0 bg-white/95 backdrop-blur-md z-10 px-6 pt-8 pb-4 flex justify-between items-center border-b border-gray-100">
       <div class="flex items-center gap-3">
-        <button id="back-btn" onclick="goBack()" class="hidden text-2xl font-black text-[#111111] active:opacity-60">←</button>
-        <h1 id="page-title" class="text-2xl font-black tracking-tight text-[#111111]">新增重點</h1>
+        <button id="back-btn" onclick="goBack()" class="hidden text-2xl font-medium text-[#111111] active:opacity-60">←</button>
+        <h1 id="page-title" class="text-2xl font-medium tracking-tight text-[#111111]">新增重點</h1>
       </div>
       <div class="w-3 h-3 rounded-full bg-[#7C3AED]"></div>
     </header>
@@ -39,7 +39,7 @@
       <!-- 頁面 1: 書庫列表 -->
       <div id="view-books" class="hidden space-y-4">
         <div id="books-list" class="space-y-4">
-          <p class="text-center text-gray-400 py-12 font-bold text-base">載入中...</p>
+          <p class="text-center text-gray-400 py-12 font-medium text-base">載入中...</p>
         </div>
       </div>
 
@@ -51,17 +51,17 @@
       <!-- 頁面 2: 主題列表 -->
       <div id="view-categories" class="hidden space-y-4">
         <div class="flex gap-2 items-center">
-          <select id="category-filter" onchange="filterCategory(this.value)" class="flex-1 bg-[#F6F6F6] text-[#111111] px-4 py-3 rounded-xl font-bold border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none">
+          <select id="category-filter" onchange="filterCategory(this.value)" class="flex-1 bg-[#F6F6F6] text-[#111111] px-4 py-3 rounded-xl font-medium border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none">
             <option value="ALL">全部主題</option>
           </select>
 
-          <button id="sort-btn" onclick="toggleCategorySort()" class="bg-[#F6F6F6] text-[#7C3AED] px-4 py-3 rounded-xl font-extrabold text-sm flex items-center gap-1 shrink-0 active:scale-95 transition">
+          <button id="sort-btn" onclick="toggleCategorySort()" class="bg-[#F6F6F6] text-[#7C3AED] px-4 py-3 rounded-xl font-medium text-sm flex items-center gap-1 shrink-0 active:scale-95 transition">
             <span id="sort-label">依最新排序</span> ⇅
           </button>
         </div>
 
         <div id="categories-list" class="space-y-6 pt-2">
-          <p class="text-center text-gray-400 py-12 font-bold text-base">載入中...</p>
+          <p class="text-center text-gray-400 py-12 font-medium text-base">載入中...</p>
         </div>
       </div>
 
@@ -76,21 +76,21 @@
           <input type="hidden" id="note-id">
 
           <div>
-            <label class="block text-sm font-extrabold text-gray-400 uppercase tracking-wider mb-2">書名</label>
-            <input type="text" id="book_title" list="book-list" required class="w-full bg-[#F6F6F6] text-[#111111] px-5 py-4 rounded-2xl border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-lg font-black leading-snug">
+            <label class="block text-sm font-medium text-gray-400 uppercase tracking-wider mb-2">書名</label>
+            <input type="text" id="book_title" list="book-list" required class="w-full bg-[#F6F6F6] text-[#111111] px-5 py-4 rounded-2xl border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-lg font-medium leading-snug">
             <datalist id="book-list"></datalist>
           </div>
 
           <div>
-            <label class="block text-sm font-extrabold text-gray-400 uppercase tracking-wider mb-2">主題分類</label>
-            <input type="text" id="category" list="category-list" required class="w-full bg-[#F6F6F6] text-[#111111] px-5 py-4 rounded-2xl border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-lg font-black leading-snug">
+            <label class="block text-sm font-medium text-gray-400 uppercase tracking-wider mb-2">主題分類</label>
+            <input type="text" id="category" list="category-list" required class="w-full bg-[#F6F6F6] text-[#111111] px-5 py-4 rounded-2xl border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-lg font-medium leading-snug">
             <datalist id="category-list"></datalist>
           </div>
 
           <!-- 劃線重點 -->
           <div>
             <div class="flex justify-between items-center mb-2">
-              <label class="block text-sm font-extrabold text-gray-400 uppercase tracking-wider">劃線重點</label>
+              <label class="block text-sm font-medium text-gray-400 uppercase tracking-wider">劃線重點</label>
               <div class="flex items-center gap-2">
                 <button type="button" onclick="triggerCamera()" title="拍照劃線辨識" class="p-2 rounded-full text-[#7C3AED] bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 active:scale-95 transition flex items-center gap-1">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -108,22 +108,17 @@
               </div>
             </div>
 
-            <!-- 獨立劃黃線控制列，避開系統選單遮擋 -->
-            <div class="flex items-center justify-between bg-yellow-50/80 px-3 py-1.5 rounded-xl mb-2 border border-yellow-200/50">
-              <span class="text-xs font-bold text-yellow-800">選取文字後點擊劃線：</span>
-              <button type="button" onclick="toggleHighlight('quote')" class="flex items-center gap-1.5 bg-yellow-300 text-yellow-950 px-3 py-1 rounded-full text-xs font-extrabold shadow-sm active:scale-95 transition">
-                <span class="w-3 h-3 bg-yellow-400 rounded-full border border-yellow-500"></span>
-                劃黃重點
-              </button>
+            <!-- 欄位內部：右下角黃色圓圈按鈕 -->
+            <div class="relative w-full">
+              <div id="quote" contenteditable="true" class="w-full min-h-[190px] bg-[#F6F6F6] text-[#111111] p-5 pb-12 rounded-2xl focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-normal leading-relaxed overflow-y-auto"></div>
+              <button type="button" onmousedown="preventFocusLoss(event)" onclick="toggleHighlight('quote')" title="劃黃重點/取消" class="absolute right-3 bottom-3 w-8 h-8 bg-yellow-300 border-2 border-yellow-400 rounded-full shadow-md active:scale-90 transition flex items-center justify-center z-10"></button>
             </div>
-
-            <div id="quote" contenteditable="true" class="w-full min-h-[190px] bg-[#F6F6F6] text-[#111111] p-5 rounded-2xl focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-semibold leading-relaxed overflow-y-auto"></div>
           </div>
 
           <!-- 個人心得 -->
           <div>
             <div class="flex justify-between items-center mb-2">
-              <label class="block text-sm font-extrabold text-gray-400 uppercase tracking-wider">個人心得</label>
+              <label class="block text-sm font-medium text-gray-400 uppercase tracking-wider">個人心得</label>
               <div class="flex items-center gap-3">
                 <button type="button" onclick="startSpeech('thought')" title="語音輸入" class="p-2 rounded-full text-[#7C3AED] bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 active:scale-95 transition">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -133,22 +128,17 @@
               </div>
             </div>
 
-            <!-- 獨立劃黃線控制列 -->
-            <div class="flex items-center justify-between bg-yellow-50/80 px-3 py-1.5 rounded-xl mb-2 border border-yellow-200/50">
-              <span class="text-xs font-bold text-yellow-800">選取文字後點擊劃線：</span>
-              <button type="button" onclick="toggleHighlight('thought')" class="flex items-center gap-1.5 bg-yellow-300 text-yellow-950 px-3 py-1 rounded-full text-xs font-extrabold shadow-sm active:scale-95 transition">
-                <span class="w-3 h-3 bg-yellow-400 rounded-full border border-yellow-500"></span>
-                劃黃重點
-              </button>
+            <!-- 欄位內部：右下角黃色圓圈按鈕 -->
+            <div class="relative w-full">
+              <div id="thought" contenteditable="true" class="w-full min-h-[120px] bg-[#F6F6F6] text-[#111111] p-5 pb-12 rounded-2xl focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-normal leading-relaxed overflow-y-auto"></div>
+              <button type="button" onmousedown="preventFocusLoss(event)" onclick="toggleHighlight('thought')" title="劃黃重點/取消" class="absolute right-3 bottom-3 w-8 h-8 bg-yellow-300 border-2 border-yellow-400 rounded-full shadow-md active:scale-90 transition flex items-center justify-center z-10"></button>
             </div>
-
-            <div id="thought" contenteditable="true" class="w-full min-h-[120px] bg-[#F6F6F6] text-[#111111] p-5 rounded-2xl focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-semibold leading-relaxed overflow-y-auto"></div>
           </div>
 
-          <!-- 操作按鈕：全導角且左右 50% 排放 -->
+          <!-- 操作按鈕：刪除改為淺灰底白字、全導角且左右 50% 排放 -->
           <div class="flex items-center gap-3 pt-2">
-            <button type="button" id="delete-btn" onclick="handleFormDelete()" class="hidden flex-1 bg-red-50 text-red-500 font-extrabold py-4 rounded-full text-base active:scale-95 transition-transform">刪除重點</button>
-            <button type="submit" id="submit-btn" class="flex-1 bg-gradient-to-r from-[#8B5CF6] to-[#7C3AED] text-white font-black py-4 rounded-full text-base shadow-lg shadow-purple-200 active:scale-95 transition-transform">儲存重點</button>
+            <button type="button" id="delete-btn" onclick="handleFormDelete()" class="hidden flex-1 bg-gray-200 text-white font-medium py-4 rounded-full text-base active:scale-95 transition-transform">刪除重點</button>
+            <button type="submit" id="submit-btn" class="flex-1 bg-gradient-to-r from-[#8B5CF6] to-[#7C3AED] text-white font-medium py-4 rounded-full text-base shadow-lg shadow-purple-200 active:scale-95 transition-transform">儲存重點</button>
           </div>
         </form>
       </div>
@@ -158,15 +148,15 @@
     <!-- 固定 Bottom Bar -->
     <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-md bg-[#111111] text-white rounded-full z-40 px-6 py-1.5 shadow-2xl">
       <div class="flex justify-between items-center h-10">
-        <button onclick="switchTab('books')" id="nav-books" class="flex-1 flex items-center justify-center text-center font-extrabold text-sm text-gray-400 transition-opacity">
+        <button onclick="switchTab('books')" id="nav-books" class="flex-1 flex items-center justify-center text-center font-medium text-sm text-gray-400 transition-opacity">
           書庫
         </button>
 
-        <button onclick="openAddNew()" id="nav-add" class="w-16 h-16 bg-[#7C3AED] text-white rounded-full flex items-center justify-center font-black text-4xl shrink-0 shadow-xl active:scale-90 transition-transform -my-4 z-50">
+        <button onclick="openAddNew()" id="nav-add" class="w-16 h-16 bg-[#7C3AED] text-white rounded-full flex items-center justify-center font-normal text-4xl shrink-0 shadow-xl active:scale-90 transition-transform -my-4 z-50">
           +
         </button>
 
-        <button onclick="switchTab('categories')" id="nav-categories" class="flex-1 flex items-center justify-center text-center font-extrabold text-sm text-gray-400 transition-opacity">
+        <button onclick="switchTab('categories')" id="nav-categories" class="flex-1 flex items-center justify-center text-center font-medium text-sm text-gray-400 transition-opacity">
           主題
         </button>
       </div>
@@ -177,8 +167,8 @@
   <!-- 塗鴉 Modal -->
   <div id="doodle-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex flex-col items-center justify-between p-4 backdrop-blur-sm">
     <div class="w-full flex justify-between items-center text-white py-2">
-      <h3 class="text-lg font-bold">塗黃線選取要辨識的文字</h3>
-      <button onclick="closeDoodleModal()" class="text-gray-300 font-bold px-2 py-1">關閉</button>
+      <h3 class="text-lg font-medium">塗黃線選取要辨識的文字</h3>
+      <button onclick="closeDoodleModal()" class="text-gray-300 font-medium px-2 py-1">關閉</button>
     </div>
 
     <div class="relative flex-1 w-full flex items-center justify-center overflow-hidden canvas-container">
@@ -187,12 +177,11 @@
 
     <div class="w-full max-w-md bg-white p-4 rounded-3xl space-y-3 mt-3">
       <div class="flex items-center justify-between px-2">
-        <span class="text-xs font-bold text-gray-500 uppercase">筆刷粗細</span>
-        <!-- 調整筆刷初設值為更細的 25 -->
+        <span class="text-xs font-medium text-gray-500 uppercase">筆刷粗細</span>
         <input type="range" id="brush-size" min="5" max="60" value="25" class="w-1/2 accent-[#7C3AED]">
-        <button onclick="clearCanvasDoodle()" class="text-xs font-bold text-red-500 bg-red-50 px-3 py-1.5 rounded-full">重畫</button>
+        <button onclick="clearCanvasDoodle()" class="text-xs font-medium text-red-500 bg-red-50 px-3 py-1.5 rounded-full">重畫</button>
       </div>
-      <button id="ocr-btn" onclick="processDoodleCropOCR()" class="w-full bg-[#7C3AED] text-white font-extrabold py-3.5 rounded-full text-base shadow-md active:scale-95 transition">
+      <button id="ocr-btn" onclick="processDoodleCropOCR()" class="w-full bg-[#7C3AED] text-white font-medium py-3.5 rounded-full text-base shadow-md active:scale-95 transition">
         辨識塗黃區域文字
       </button>
     </div>
@@ -313,8 +302,8 @@
       const views = ['view-books', 'view-book-detail', 'view-categories', 'view-category-detail', 'view-add'];
       views.forEach(v => document.getElementById(v).classList.add('hidden'));
 
-      navBooks.className = "flex-1 flex items-center justify-center text-center font-extrabold text-sm text-gray-400";
-      navCat.className = "flex-1 flex items-center justify-center text-center font-extrabold text-sm text-gray-400";
+      navBooks.className = "flex-1 flex items-center justify-center text-center font-medium text-sm text-gray-400";
+      navCat.className = "flex-1 flex items-center justify-center text-center font-medium text-sm text-gray-400";
       backBtn.classList.add('hidden');
 
       if (activeBook) {
@@ -329,12 +318,12 @@
         renderCategoryDetailView();
       } else if (currentTab === 'books') {
         title.innerText = "Library";
-        navBooks.className = "flex-1 flex items-center justify-center text-center font-extrabold text-sm text-white";
+        navBooks.className = "flex-1 flex items-center justify-center text-center font-medium text-sm text-white";
         document.getElementById('view-books').classList.remove('hidden');
         renderBooksView();
       } else if (currentTab === 'categories') {
         title.innerText = "Topics";
-        navCat.className = "flex-1 flex items-center justify-center text-center font-extrabold text-sm text-white";
+        navCat.className = "flex-1 flex items-center justify-center text-center font-medium text-sm text-white";
         document.getElementById('view-categories').classList.remove('hidden');
         renderCategoriesView();
       } else if (currentTab === 'add') {
@@ -348,16 +337,16 @@
       const bookNames = [...new Set(allNotes.map(n => n.book_title).filter(Boolean))];
 
       if (bookNames.length === 0) {
-        container.innerHTML = `<p class="text-center text-gray-400 py-12 font-bold text-base">尚未新增任何書籍</p>`;
+        container.innerHTML = `<p class="text-center text-gray-400 py-12 font-medium text-base">尚未新增任何書籍</p>`;
         return;
       }
 
       container.innerHTML = bookNames.map(book => `
         <div class="bg-[#F6F6F6] rounded-2xl p-5 flex justify-between items-center">
-          <h2 onclick="openBookDetail('${book}')" class="text-lg font-black text-[#111111] flex-1 cursor-pointer">${book}</h2>
+          <h2 onclick="openBookDetail('${book}')" class="text-lg font-medium text-[#111111] flex-1 cursor-pointer">${book}</h2>
           <div class="flex items-center gap-3">
-            <button onclick="openAddNew('${book}')" title="為這本書新增重點" class="w-8 h-8 rounded-full bg-[#7C3AED]/10 text-[#7C3AED] font-black flex items-center justify-center text-lg active:scale-90 transition">+</button>
-            <span onclick="openBookDetail('${book}')" class="text-gray-400 font-extrabold text-lg cursor-pointer">→</span>
+            <button onclick="openAddNew('${book}')" title="為這本書新增重點" class="w-8 h-8 rounded-full bg-[#7C3AED]/10 text-[#7C3AED] font-medium flex items-center justify-center text-lg active:scale-90 transition">+</button>
+            <span onclick="openBookDetail('${book}')" class="text-gray-400 font-medium text-lg cursor-pointer">→</span>
           </div>
         </div>
       `).join('');
@@ -400,7 +389,7 @@
       let categories = Object.keys(catMap);
 
       if (categories.length === 0) {
-        container.innerHTML = `<p class="text-center text-gray-400 py-12 font-bold text-base">尚未新增任何主題</p>`;
+        container.innerHTML = `<p class="text-center text-gray-400 py-12 font-medium text-base">尚未新增任何主題</p>`;
         return;
       }
 
@@ -419,7 +408,7 @@
         return `
           <div class="space-y-3">
             <div class="flex justify-between items-baseline px-1">
-              <h2 class="text-2xl font-black tracking-tight text-[#111111]">${cat}</h2>
+              <h2 class="text-2xl font-medium tracking-tight text-[#111111]">${cat}</h2>
             </div>
             <div class="space-y-3">
               ${notes.map(note => renderPreviewCard(note)).join('')}
@@ -445,10 +434,10 @@
       return `
         <div onclick="editNote(${note.id})" class="bg-[#F6F6F6] p-5 rounded-2xl cursor-pointer active:scale-98 transition relative space-y-3">
           <div class="flex justify-between items-center">
-            <p class="text-xs font-black text-gray-400 uppercase tracking-wider">${note.book_title}</p>
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">${note.book_title}</p>
           </div>
-          <div class="text-base font-semibold text-[#111111] leading-relaxed pl-1">${note.quote}</div>
-          ${note.thought ? `<div class="text-sm font-semibold bg-[#F3E8FF] text-[#6B21A8] p-3.5 rounded-xl leading-relaxed">${note.thought}</div>` : ''}
+          <div class="text-base font-normal text-[#111111] leading-relaxed pl-1">${note.quote}</div>
+          ${note.thought ? `<div class="text-sm font-normal bg-[#F3E8FF] text-[#6B21A8] p-3.5 rounded-xl leading-relaxed">${note.thought}</div>` : ''}
         </div>
       `;
     }
@@ -457,10 +446,10 @@
       return `
         <div onclick="editNote(${note.id})" class="bg-[#F6F6F6] p-5 rounded-2xl space-y-3 cursor-pointer active:scale-98 transition relative">
           <div class="flex justify-between items-center">
-            <p class="text-xs font-black text-gray-400 uppercase tracking-wider">${note.category || '未分類'}</p>
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">${note.category || '未分類'}</p>
           </div>
-          <div class="text-base font-semibold text-[#111111] leading-relaxed pl-1">${note.quote}</div>
-          ${note.thought ? `<div class="text-sm font-semibold bg-[#F3E8FF] text-[#6B21A8] p-3.5 rounded-xl leading-relaxed">${note.thought}</div>` : ''}
+          <div class="text-base font-normal text-[#111111] leading-relaxed pl-1">${note.quote}</div>
+          ${note.thought ? `<div class="text-sm font-normal bg-[#F3E8FF] text-[#6B21A8] p-3.5 rounded-xl leading-relaxed">${note.thought}</div>` : ''}
         </div>
       `;
     }
@@ -488,6 +477,11 @@
       document.getElementById('delete-btn').classList.remove('hidden');
       switchTab('add');
       scrollToTop();
+    }
+
+    // 防止點擊黃色圓圈按鈕時使輸入框選取的文字失焦點
+    function preventFocusLoss(e) {
+      e.preventDefault();
     }
 
     function toggleHighlight(targetId) {
@@ -683,6 +677,19 @@
       return cropCanvas.toDataURL('image/png');
     }
 
+    // 將半形標點轉為全形
+    function convertToFullWidthPunctuation(str) {
+      return str
+        .replace(/,/g, '，')
+        .replace(/\./g, '。')
+        .replace(/\!/g, '！')
+        .replace(/\?/g, '？')
+        .replace(/\:/g, '：')
+        .replace(/\;/g, '；')
+        .replace(/\(/g, '（')
+        .replace(/\)/g, '）');
+    }
+
     async function processDoodleCropOCR() {
       const btn = document.getElementById('ocr-btn');
       btn.innerText = '辨識文字中...';
@@ -696,7 +703,8 @@
           'chi_tra'
         );
 
-        const cleanText = text.replace(/\s+/g, '').trim();
+        let cleanText = text.replace(/\s+/g, '').trim();
+        cleanText = convertToFullWidthPunctuation(cleanText);
 
         if (cleanText) {
           const editor = document.getElementById('quote');
