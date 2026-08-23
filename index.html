@@ -205,12 +205,19 @@
 
     let maskMinX = Infinity, maskMinY = Infinity, maskMaxX = -Infinity, maskMaxY = -Infinity;
 
-    // 清理 HTML 與隱藏標籤，若是純空白則傳回 null
+    // 清理 HTML 與隱藏標籤，若無任何純文字內容則回傳 null
     function cleanHtmlContent(html) {
       if (!html) return null;
       let textOnly = html.replace(/<[^>]*>/g, '');
       textOnly = textOnly.replace(/&nbsp;/gi, '').replace(/\s+/g, '').trim();
       return textOnly.length === 0 ? null : html.trim();
+    }
+
+    // 檢查字串是否包含真正的有效文字
+    function hasValidContent(text) {
+      if (!text) return false;
+      const clean = text.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, '').replace(/\s+/g, '').trim();
+      return clean.length > 0;
     }
 
     function initAppStateFromHash() {
@@ -440,27 +447,27 @@
     }
 
     function renderPreviewCard(note) {
-      const cleanThought = cleanHtmlContent(note.thought);
+      const showThought = hasValidContent(note.thought);
       return `
         <div onclick="editNote(${note.id})" class="bg-[#F6F6F6] p-5 rounded-2xl cursor-pointer active:scale-98 transition relative space-y-3">
           <div class="flex justify-between items-center">
             <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">${note.book_title}</p>
           </div>
           <div class="text-base font-normal text-[#111111] leading-relaxed pl-1">${note.quote}</div>
-          ${cleanThought ? `<div class="text-sm font-normal bg-[#F3E8FF] text-[#6B21A8] p-3.5 rounded-xl leading-relaxed">${cleanThought}</div>` : ''}
+          ${showThought ? `<div class="text-sm font-normal bg-[#F3E8FF] text-[#6B21A8] p-3.5 rounded-xl leading-relaxed">${note.thought}</div>` : ''}
         </div>
       `;
     }
 
     function renderFullCard(note) {
-      const cleanThought = cleanHtmlContent(note.thought);
+      const showThought = hasValidContent(note.thought);
       return `
         <div onclick="editNote(${note.id})" class="bg-[#F6F6F6] p-5 rounded-2xl space-y-3 cursor-pointer active:scale-98 transition relative">
           <div class="flex justify-between items-center">
             <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">${note.category || '未分類'}</p>
           </div>
           <div class="text-base font-normal text-[#111111] leading-relaxed pl-1">${note.quote}</div>
-          ${cleanThought ? `<div class="text-sm font-normal bg-[#F3E8FF] text-[#6B21A8] p-3.5 rounded-xl leading-relaxed">${cleanThought}</div>` : ''}
+          ${showThought ? `<div class="text-sm font-normal bg-[#F3E8FF] text-[#6B21A8] p-3.5 rounded-xl leading-relaxed">${note.thought}</div>` : ''}
         </div>
       `;
     }
