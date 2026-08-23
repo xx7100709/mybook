@@ -50,13 +50,11 @@
 
       <!-- 頁面 2: 主題列表 -->
       <div id="view-categories" class="hidden space-y-4">
-        <!-- 主題控制列：分類篩選與直覺排序 -->
         <div class="flex gap-2 items-center">
           <select id="category-filter" onchange="filterCategory(this.value)" class="flex-1 bg-[#F6F6F6] text-[#111111] px-4 py-3 rounded-xl font-bold border-0 focus:ring-2 focus:ring-[#7C3AED] focus:outline-none">
             <option value="ALL">全部主題</option>
           </select>
 
-          <!-- 排序：最新 ⇄ 名稱 -->
           <button id="sort-btn" onclick="toggleCategorySort()" class="bg-[#F6F6F6] text-[#7C3AED] px-4 py-3 rounded-xl font-extrabold text-sm flex items-center gap-1 shrink-0 active:scale-95 transition">
             <span id="sort-label">依最新排序</span> ⇅
           </button>
@@ -102,7 +100,6 @@
                 </button>
                 <input type="file" id="camera-input" accept="image/*" capture="environment" class="hidden" onchange="handleImageUpload(event)">
 
-                <button type="button" onclick="toggleHighlight('quote')" title="開關黃色重點" class="w-7 h-7 bg-yellow-300 rounded-full shadow-sm active:scale-90 transition border border-yellow-400/30"></button>
                 <button type="button" onclick="startSpeech('quote')" title="語音輸入" class="p-2 rounded-full text-[#7C3AED] bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 active:scale-95 transition">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 003-3V6a3 3 0 00-6 0v6.75a3 3 0 003 3z"></path>
@@ -110,6 +107,16 @@
                 </button>
               </div>
             </div>
+
+            <!-- 獨立劃黃線控制列，避開系統選單遮擋 -->
+            <div class="flex items-center justify-between bg-yellow-50/80 px-3 py-1.5 rounded-xl mb-2 border border-yellow-200/50">
+              <span class="text-xs font-bold text-yellow-800">選取文字後點擊劃線：</span>
+              <button type="button" onclick="toggleHighlight('quote')" class="flex items-center gap-1.5 bg-yellow-300 text-yellow-950 px-3 py-1 rounded-full text-xs font-extrabold shadow-sm active:scale-95 transition">
+                <span class="w-3 h-3 bg-yellow-400 rounded-full border border-yellow-500"></span>
+                劃黃重點
+              </button>
+            </div>
+
             <div id="quote" contenteditable="true" class="w-full min-h-[190px] bg-[#F6F6F6] text-[#111111] p-5 rounded-2xl focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-semibold leading-relaxed overflow-y-auto"></div>
           </div>
 
@@ -118,7 +125,6 @@
             <div class="flex justify-between items-center mb-2">
               <label class="block text-sm font-extrabold text-gray-400 uppercase tracking-wider">個人心得</label>
               <div class="flex items-center gap-3">
-                <button type="button" onclick="toggleHighlight('thought')" title="開關黃色重點" class="w-7 h-7 bg-yellow-300 rounded-full shadow-sm active:scale-90 transition border border-yellow-400/30"></button>
                 <button type="button" onclick="startSpeech('thought')" title="語音輸入" class="p-2 rounded-full text-[#7C3AED] bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 active:scale-95 transition">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 003-3V6a3 3 0 00-6 0v6.75a3 3 0 003 3z"></path>
@@ -126,13 +132,23 @@
                 </button>
               </div>
             </div>
+
+            <!-- 獨立劃黃線控制列 -->
+            <div class="flex items-center justify-between bg-yellow-50/80 px-3 py-1.5 rounded-xl mb-2 border border-yellow-200/50">
+              <span class="text-xs font-bold text-yellow-800">選取文字後點擊劃線：</span>
+              <button type="button" onclick="toggleHighlight('thought')" class="flex items-center gap-1.5 bg-yellow-300 text-yellow-950 px-3 py-1 rounded-full text-xs font-extrabold shadow-sm active:scale-95 transition">
+                <span class="w-3 h-3 bg-yellow-400 rounded-full border border-yellow-500"></span>
+                劃黃重點
+              </button>
+            </div>
+
             <div id="thought" contenteditable="true" class="w-full min-h-[120px] bg-[#F6F6F6] text-[#111111] p-5 rounded-2xl focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-semibold leading-relaxed overflow-y-auto"></div>
           </div>
 
-          <!-- 表單操作區：採用鮮明紫漸層與 Bottom bar 區隔 -->
-          <div class="space-y-3 pt-2">
-            <button type="submit" id="submit-btn" class="w-full bg-gradient-to-r from-[#8B5CF6] to-[#7C3AED] text-white font-black py-4 rounded-2xl text-base shadow-lg shadow-purple-200 active:scale-98 transition-all">儲存重點</button>
-            <button type="button" id="delete-btn" onclick="handleFormDelete()" class="hidden w-full bg-[#F6F6F6] text-gray-500 font-bold py-3.5 rounded-2xl text-sm active:scale-98 transition">刪除重點</button>
+          <!-- 操作按鈕：全導角且左右 50% 排放 -->
+          <div class="flex items-center gap-3 pt-2">
+            <button type="button" id="delete-btn" onclick="handleFormDelete()" class="hidden flex-1 bg-red-50 text-red-500 font-extrabold py-4 rounded-full text-base active:scale-95 transition-transform">刪除重點</button>
+            <button type="submit" id="submit-btn" class="flex-1 bg-gradient-to-r from-[#8B5CF6] to-[#7C3AED] text-white font-black py-4 rounded-full text-base shadow-lg shadow-purple-200 active:scale-95 transition-transform">儲存重點</button>
           </div>
         </form>
       </div>
@@ -172,7 +188,8 @@
     <div class="w-full max-w-md bg-white p-4 rounded-3xl space-y-3 mt-3">
       <div class="flex items-center justify-between px-2">
         <span class="text-xs font-bold text-gray-500 uppercase">筆刷粗細</span>
-        <input type="range" id="brush-size" min="20" max="100" value="50" class="w-1/2 accent-[#7C3AED]">
+        <!-- 調整筆刷初設值為更細的 25 -->
+        <input type="range" id="brush-size" min="5" max="60" value="25" class="w-1/2 accent-[#7C3AED]">
         <button onclick="clearCanvasDoodle()" class="text-xs font-bold text-red-500 bg-red-50 px-3 py-1.5 rounded-full">重畫</button>
       </div>
       <button id="ocr-btn" onclick="processDoodleCropOCR()" class="w-full bg-[#7C3AED] text-white font-extrabold py-3.5 rounded-full text-base shadow-md active:scale-95 transition">
@@ -191,7 +208,7 @@
     let activeBook = null;
     let activeCategory = null;
     let selectedCategoryFilter = 'ALL';
-    let categorySortMode = 'time'; // 'time' (最新) 或 'name' (依主題名稱)
+    let categorySortMode = 'time';
 
     let loadedImage = null;
     const canvas = document.getElementById('doodle-canvas');
@@ -363,7 +380,6 @@
       renderCategoriesView();
     }
 
-    // 主題排序模式：依最新 ⇄ 依主題名稱
     function toggleCategorySort() {
       categorySortMode = categorySortMode === 'time' ? 'name' : 'time';
       document.getElementById('sort-label').innerText = categorySortMode === 'time' ? '依最新排序' : '依名稱排序';
@@ -474,7 +490,6 @@
       scrollToTop();
     }
 
-    // 支援「重新選取再按一次取消劃線」 (Toggle Highlight)
     function toggleHighlight(targetId) {
       const editor = document.getElementById(targetId);
       const sel = window.getSelection();
@@ -490,7 +505,6 @@
         return;
       }
 
-      // 檢查選取範圍內是否已經有 <mark> 標籤
       let parentNode = sel.anchorNode.parentNode;
       let markNode = null;
 
@@ -503,11 +517,9 @@
       }
 
       if (markNode) {
-        // 解除重點：用純文字替換掉 mark 標籤
         const textNode = document.createTextNode(markNode.textContent);
         markNode.parentNode.replaceChild(textNode, markNode);
       } else {
-        // 加上黃色重點
         const span = document.createElement('mark');
         span.className = 'bg-yellow-200 px-1 rounded text-[#111111]';
         try {
@@ -532,8 +544,6 @@
       };
       recognition.start();
     }
-
-    // --- 相片辨識 OCR 與灰階二值化處理 ---
 
     function triggerCamera() {
       document.getElementById('camera-input').click();
@@ -642,15 +652,12 @@
       if (y + radius > maskMaxY) maskMaxY = Math.min(canvas.height, y + radius);
     }
 
-    // 圖片預處理：提升 OCR 正確率
     function preprocessCanvas(cropCtx, width, height) {
       const imgData = cropCtx.getImageData(0, 0, width, height);
       const data = imgData.data;
 
-      // 灰階化與提升對比
       for (let i = 0; i < data.length; i += 4) {
         let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-        // 高對比強化（黑白更分明）
         avg = avg < 140 ? 0 : 255;
         data[i] = avg;
         data[i + 1] = avg;
@@ -689,12 +696,10 @@
           'chi_tra'
         );
 
-        // 清理無效空白與換行符號
         const cleanText = text.replace(/\s+/g, '').trim();
 
         if (cleanText) {
           const editor = document.getElementById('quote');
-          // 辨識結果直接插入為一般文字，不再反黃
           editor.innerHTML = editor.innerHTML ? editor.innerHTML + '<br>' + cleanText : cleanText;
           closeDoodleModal();
         } else {
@@ -708,8 +713,6 @@
         btn.disabled = false;
       }
     }
-
-    // --- 表單提交與刪除 ---
 
     document.getElementById('note-form').addEventListener('submit', async (e) => {
       e.preventDefault();
