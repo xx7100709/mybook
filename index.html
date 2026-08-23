@@ -108,10 +108,10 @@
               </div>
             </div>
 
-            <!-- 欄位內部：右下角黃色圓圈按鈕 -->
+            <!-- 無邊框無陰影的右下角純黃圓點 -->
             <div class="relative w-full">
               <div id="quote" contenteditable="true" class="w-full min-h-[190px] bg-[#F6F6F6] text-[#111111] p-5 pb-12 rounded-2xl focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-normal leading-relaxed overflow-y-auto"></div>
-              <button type="button" onmousedown="preventFocusLoss(event)" onclick="toggleHighlight('quote')" title="劃黃重點/取消" class="absolute right-3 bottom-3 w-8 h-8 bg-yellow-300 border-2 border-yellow-400 rounded-full shadow-md active:scale-90 transition flex items-center justify-center z-10"></button>
+              <button type="button" onmousedown="preventFocusLoss(event)" onclick="toggleHighlight('quote')" title="劃黃重點/取消" class="absolute right-3 bottom-3 w-8 h-8 bg-yellow-300 rounded-full active:scale-90 transition flex items-center justify-center z-10"></button>
             </div>
           </div>
 
@@ -128,14 +128,14 @@
               </div>
             </div>
 
-            <!-- 欄位內部：右下角黃色圓圈按鈕 -->
+            <!-- 無邊框無陰影的右下角純黃圓點 -->
             <div class="relative w-full">
               <div id="thought" contenteditable="true" class="w-full min-h-[120px] bg-[#F6F6F6] text-[#111111] p-5 pb-12 rounded-2xl focus:ring-2 focus:ring-[#7C3AED] focus:outline-none text-base font-normal leading-relaxed overflow-y-auto"></div>
-              <button type="button" onmousedown="preventFocusLoss(event)" onclick="toggleHighlight('thought')" title="劃黃重點/取消" class="absolute right-3 bottom-3 w-8 h-8 bg-yellow-300 border-2 border-yellow-400 rounded-full shadow-md active:scale-90 transition flex items-center justify-center z-10"></button>
+              <button type="button" onmousedown="preventFocusLoss(event)" onclick="toggleHighlight('thought')" title="劃黃重點/取消" class="absolute right-3 bottom-3 w-8 h-8 bg-yellow-300 rounded-full active:scale-90 transition flex items-center justify-center z-10"></button>
             </div>
           </div>
 
-          <!-- 操作按鈕：刪除改為淺灰底白字、全導角且左右 50% 排放 -->
+          <!-- 操作按鈕 -->
           <div class="flex items-center gap-3 pt-2">
             <button type="button" id="delete-btn" onclick="handleFormDelete()" class="hidden flex-1 bg-gray-200 text-white font-medium py-4 rounded-full text-base active:scale-95 transition-transform">刪除重點</button>
             <button type="submit" id="submit-btn" class="flex-1 bg-gradient-to-r from-[#8B5CF6] to-[#7C3AED] text-white font-medium py-4 rounded-full text-base shadow-lg shadow-purple-200 active:scale-95 transition-transform">儲存重點</button>
@@ -267,6 +267,7 @@
       activeCategory = null;
       updateHash();
       renderCurrentView();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function openAddNew(defaultBookTitle = '') {
@@ -356,6 +357,7 @@
       activeBook = book;
       updateHash();
       renderCurrentView();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function renderBookDetailView() {
@@ -422,6 +424,7 @@
       activeCategory = cat;
       updateHash();
       renderCurrentView();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function renderCategoryDetailView() {
@@ -479,7 +482,6 @@
       scrollToTop();
     }
 
-    // 防止點擊黃色圓圈按鈕時使輸入框選取的文字失焦點
     function preventFocusLoss(e) {
       e.preventDefault();
     }
@@ -489,13 +491,13 @@
       const sel = window.getSelection();
 
       if (!sel.rangeCount || sel.isCollapsed) {
-        alert("請先選取要劃線或取消重點的文字！");
+        alert("請先選取要劃線的文字");
         return;
       }
 
       const range = sel.getRangeAt(0);
       if (!editor.contains(range.commonAncestorContainer)) {
-        alert("請選取該編輯區域內的文字");
+        alert("請選取欄位內的文字");
         return;
       }
 
@@ -677,7 +679,6 @@
       return cropCanvas.toDataURL('image/png');
     }
 
-    // 將半形標點轉為全形
     function convertToFullWidthPunctuation(str) {
       return str
         .replace(/,/g, '，')
@@ -711,7 +712,7 @@
           editor.innerHTML = editor.innerHTML ? editor.innerHTML + '<br>' + cleanText : cleanText;
           closeDoodleModal();
         } else {
-          alert('未能清楚辨識，請確保劃線涵蓋文字、並儘量保持相片平整清晰！');
+          alert('未能清楚辨識，請確保劃線涵蓋文字');
         }
       } catch (err) {
         console.error(err);
