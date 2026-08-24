@@ -245,6 +245,11 @@
       renderCurrentView();
     });
 
+    document.addEventListener('DOMContentLoaded', () => {
+      initAppStateFromHash();
+      fetchNotes();
+    });
+
     async function fetchNotes() {
       if (!supabaseClient) return;
       const { data, error } = await supabaseClient.from('book_notes').select('*').order('created_at', { ascending: false });
@@ -581,14 +586,19 @@
         loadedImage.onload = () => {
           openDoodleModal();
         };
-        loadedImage.src = event.result;
+        loadedImage.onerror = () => {
+          alert("圖片載入失敗，請再試一次");
+        };
+        loadedImage.src = event.target.result;
       };
       reader.readAsDataURL(file);
     }
 
     function openDoodleModal() {
       document.getElementById('doodle-modal').classList.remove('hidden');
-      setupCanvas();
+      setTimeout(() => {
+        setupCanvas();
+      }, 50);
     }
 
     function closeDoodleModal() {
@@ -601,13 +611,15 @@
     }
 
     function setupCanvas() {
+      if (!loadedImage) return;
+
       canvas.width = loadedImage.width;
       canvas.height = loadedImage.height;
 
       ctx.drawImage(loadedImage, 0, 0, canvas.width, canvas.height);
 
       const rect = canvas.getBoundingClientRect();
-      scaleRatio = canvas.width / rect.width;
+      scaleRatio = rect.width > 0 ? (canvas.width / rect.width) : 1;
 
       resetMaskBounds();
       initCanvasEvents();
@@ -633,7 +645,7 @@
 
     function getCanvasPos(e) {
       const rect = canvas.getBoundingClientRect();
-      scaleRatio = canvas.width / rect.width;
+      scaleRatio = rect.width > 0 ? (canvas.width / rect.width) : 1;
       return {
         x: (e.clientX - rect.left) * scaleRatio,
         y: (e.clientY - rect.top) * scaleRatio
@@ -749,16 +761,17 @@
       }
     }
 
-    // 關鍵修復：編輯儲存事件
     document.getElementById('note-form').addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      // 1. 強制讓當前 Focus 的輸入框失焦，確保手機輸入法將內容實體化寫入 DOM
       if (document.activeElement) {
         document.activeElement.blur();
       }
 
-      // 2. 實時從 DOM 讀取最新修改的內容
+      const id = document.getElementById('note-id').value;
+      const book_title = document.getElementById('book_title').value.trim();
+      const category = document.getElementById('category').value.trim();
+
       const quoteElem = document.getElementById('quote');
       const thoughtElem = document.getElementById('thought');
 
@@ -773,71 +786,59 @@
         return;
       }
 
-      const btn = document.getElementById('submit-btn');
-      btn.innerText = '儲存中...'; 
-      btn.disabled = true;
-
-      const noteId = document.getElementById('note-id').value;
       const payload = {
-        book_title: document.getElementById('book_title').value,
-        category: document.getElementById('category').value || '未分類',
+        book_title,
+        category,
         quote: quoteHtml,
         thought: thoughtHtml
       };
 
-      let error;
-      if (noteId) {
-        // 更新資料庫中既有的重點
-        // 加上 .select()，這樣才能知道「有沒有真的更新到資料」。
-        // 若 Supabase 的 RLS 沒開放 UPDATE 權限，update() 常常不會回傳 error，
-        // 但實際上是 0 筆資料被改到，畫面卻顯示「儲存成功」，造成「編輯完儲存但沒有修改」的情況。
-        const res = await supabaseClient.from('book_notes').update(payload).eq('id', noteId).select();
-        error = res.error;
+      const submitBtn = document.getElementById('submit-btn');
+      submitBtn.disabled = true;
+      submitBtn.innerText = "儲存中...";
 
-        if (!error && (!res.data || res.data.length === 0)) {
-          error = { message: '沒有任何資料被更新。可能原因：\n1) Supabase 資料表尚未開放 UPDATE 的 RLS 權限\n2) 該筆重點的 id 不存在\n請至 Supabase 後台檢查 book_notes 資料表的 Row Level Security 政策。' };
+      try {
+        if (!supabaseClient) throw new Error("Supabase client not initialized");
+
+        if (id) {
+          const { error } = await supabaseClient.from('book_notes').update(payload).eq('id', id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabaseClient.from('book_notes').insert([payload]);
+          if (error) throw error;
         }
-      } else {
-        // 新增重點
-        const res = await supabaseClient.from('book_notes').insert([payload]);
-        error = res.error;
-      }
 
-      btn.disabled = false;
-      btn.innerText = '儲存重點';
-
-      if (error) {
-        alert('儲存失敗：' + error.message);
-      } else { 
-        // 3. 重置表單並強制從遠端 Supabase 重新拉取最新的資料陣列
         resetForm();
         await fetchNotes();
-
-        // 4. 清空狀態，確保切回「主題」列表時顯示的是最新更新後的卡片
-        activeBook = null;
-        activeCategory = null;
-        switchTab('categories');
+        switchTab('books');
+      } catch (err) {
+        console.error(err);
+        alert("儲存失敗：" + err.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "儲存重點";
       }
     });
 
     async function handleFormDelete() {
-      const noteId = document.getElementById('note-id').value;
-      if (noteId && confirm('確定要刪除這條重點嗎？')) {
-        const { error } = await supabaseClient.from('book_notes').delete().eq('id', noteId);
-        if (!error) {
-          resetForm();
-          await fetchNotes();
-          activeBook = null;
-          activeCategory = null;
-          switchTab('categories');
-        } else {
-          alert('刪除失敗：' + error.message);
-        }
+      const id = document.getElementById('note-id').value;
+      if (!id) return;
+
+      if (!confirm("確定要刪除這筆重點嗎？")) return;
+
+      try {
+        if (!supabaseClient) throw new Error("Supabase client not initialized");
+        const { error } = await supabaseClient.from('book_notes').delete().eq('id', id);
+        if (error) throw error;
+
+        resetForm();
+        await fetchNotes();
+        switchTab('books');
+      } catch (err) {
+        console.error(err);
+        alert("刪除失敗：" + err.message);
       }
     }
-
-    initAppStateFromHash();
-    fetchNotes();
   </script>
 </body>
 </html>
